@@ -1,0 +1,25 @@
+{
+  "name": "antlr4-thresher",
+  "version": "0.0.1",
+  "description": "Direct c++ antlr4 parser generator and runtime",
+  "main": "index.js",
+  "license": "MIT",
+  "private": null,
+  "dependencies": {
+    "mio": "mandreyel/mio"
+  },
+  "devDependencies": {
+    "doctest": "onqtam/doctest",
+    "fmt": "fmtlib/fmt",
+    "graph-v2": "stdgraph/graph-v2",
+    "antlr4": "antlr/antlr4",
+    "grammars-v4": "antlr/grammars-v4"
+  },
+  "scripts": {
+    "clean": "make clean",
+    "lib": "make -j 3 -f Makefile all",
+    "build": "cd test && pwd && mkdir -p build/src/parse && make -j 3 -f Makefile all",
+    "fmt": "cd cpp_modules/fmt && mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../dist .. && make install",
+    "test": "cnpm build && cd test && pwd && ./test --test-suite='grammars'"
+  }
+}

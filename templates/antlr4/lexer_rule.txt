@@ -1,0 +1,3 @@
+std::function<bool(std::u16string::const_iterator& it)> {function} = [](std::u16string::const_iterator& it) {{ /*{expression}*/return false; }};
+
+
