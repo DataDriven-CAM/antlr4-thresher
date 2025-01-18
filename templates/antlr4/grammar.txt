@@ -58,6 +58,7 @@ namespace {namespace} {{
         vertices.push_back({{.start=&(*it), .stop=&(*it), .token=ROOT}});
         int count=0;
         int depth=0;
+        itEnd=utf16.end();
         std::u16string::const_iterator temp=it;
         while(it!=utf16.end()){{
 {rules_ladder}
@@ -81,6 +82,13 @@ namespace {namespace} {{
               }});
             apply(dagGraph);
     }};
+
+    
+    std::u16string::const_iterator itEnd;
+    bool EndOfFile(std::u16string::const_iterator& it){{
+        return it!=itEnd;
+    }};
+
 
     }};
 }}

@@ -99,6 +99,7 @@ namespace sylvanmats::dsl{
             //std::cout<<"ID to "<<vv.token<<std::endl;
             if(vv.token==sylvanmats::antlr4::parse::ID){
                 std::wstring expr2(vv.start, vv.stop);
+                if(expr2.compare(L"EOF")==0)expr2=L"EndOfFile";
                 if(depth>2 && !orOn)expr+=L" && ";
                 expr+=expr2+L"(temp)";
                 std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> cv;

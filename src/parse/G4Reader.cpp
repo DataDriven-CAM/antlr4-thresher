@@ -46,6 +46,7 @@ namespace sylvanmats::antlr4::parse {
             if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
             depthProfile[depth].push_back(vertices.size()-1);
             depth++;
+            itEnd=utf16.end();
             std::u16string::const_iterator temp=it;
             while(it!=utf16.end()){
             if(DocComment(DOC_COMMENT, DEFAULT, it, utf16.end())){
@@ -81,17 +82,13 @@ namespace sylvanmats::antlr4::parse {
             else if([&]()->bool{
                 temp=it;
                 if((*temp)==u'\''){
-                    //std::cout<<"hit? "<<static_cast<int>(*temp)<<" "<<static_cast<int>(u'\'')<<std::endl;
-                    std::u16string v(u"'\r\n\\");
+//                    std::u16string v(u"'\r\n\\");
                     ++temp;
                     bool hitEscapes=false;
-                    while((hitEscapes=EscSeq(temp)) || std::none_of(v.begin(), v.end(), [&temp](char16_t d){return ((*temp)==d);})){
-                    //std::cout<<static_cast<int>((*temp))<<" "<<(*temp)<<" huh hitEscapes "<<hitEscapes<<" "<<std::none_of(v.begin(), v.end(), [&temp](char16_t d){return ((*temp)==d);})<<std::endl;
+                    while(!EndOfFile(temp) && (*temp)!=u'\''){
+                        if((*temp)==u'\\' && (*std::next(temp))==u'\'')++temp;
                         ++temp;
-                    //std::cout<<"\t"<<static_cast<int>((*temp))<<" "<<static_cast<int>(v[0])<<" "<<(*temp)<<" huh EscSeq "<<EscSeq(temp)<<" "<<std::none_of(v.begin(), v.end(), [&temp](char16_t d){return ((*temp)==d);})<<std::endl;
                     }
-                    //--temp;
-                    //std::cout<<static_cast<int>((*temp))<<" huh "<<static_cast<int>(u'\'')<<std::endl;
                     if((*temp)==u'\''){
                     ++temp;
                     return true;

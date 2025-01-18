@@ -147,6 +147,11 @@ namespace sylvanmats::antlr4::parse {
             return false;
         };
 
+        std::u16string::const_iterator itEnd;
+        bool EndOfFile(std::u16string::const_iterator& it){
+            return it==itEnd;
+        };
+
         bool EscSeq(std::u16string::const_iterator& it){
             if((*it)==Esc){
                 ++it;
