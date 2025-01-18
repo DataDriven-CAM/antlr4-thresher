@@ -1,4 +1,6 @@
 
+MODULE_DIRECTORY ?= ../cpp_modules/
+
 all: LDFLAGS= -fuse-ld=gold -L../  -lantlr4thresher -lc -lstdc++exp -lz -ldl -pthread 
 all: build/src/formatting_test.o test
 	$(CXX) $(LDFLAGS) -o test $(wildcard build/src/*.o)  $(wildcard build/src/parse/*.o) $(wildcard build/src/dsl/*.o) $(wildcard build/src/publishing/*.o)  

@@ -120,7 +120,6 @@ namespace sylvanmats::dsl{
             }
             else if(vv.token==sylvanmats::antlr4::parse::LBRACK){
                 expr+=L"(";
-                std::cout<<"lbrack "<<size(graph::edges(dagGraph, v))<<std::endl;
                 for (auto&& be : graph::edges(dagGraph, v)){
                     auto& b=dagGraph[graph::target_id(dagGraph, be)];
                     auto& bv=graph::vertex_value(dagGraph, b);

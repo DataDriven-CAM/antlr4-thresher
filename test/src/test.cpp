@@ -60,7 +60,6 @@ tokens { STRING }
     //astGraph.reserve(3);
     astGraph.load_vertices(vertices, [&vertices](sylvanmats::antlr4::parse::ast_node& nm) {
         auto uid = static_cast<graph::vertex_id_t<graph::container::compressed_graph<int, sylvanmats::antlr4::parse::ast_node>>>(&nm - vertices.data());
-        std::cout<<"uid "<<uid<<std::endl;
         return graph::copyable_vertex_t< graph::vertex_id_t<graph::container::compressed_graph<int, sylvanmats::antlr4::parse::ast_node>>, sylvanmats::antlr4::parse::ast_node>{uid, nm};
     });
     std::cout<<"size: "<<graph::num_vertices(astGraph)<<" "<<graph::vertices(astGraph).size()<<std::endl;
@@ -140,7 +139,6 @@ TEST_CASE("test antlr4 self parse"){
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
         morpher(utf16, dagGraph);
         std::string&& content=codeGenerator();
-        std::cout<<"codeGenerator.getParserClass() "<<codeGenerator.getParserClass()<<std::endl;
         std::ofstream os("../tmp/"+codeGenerator.getParserClass()+".h");
         std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
         os.close();
@@ -154,7 +152,6 @@ TEST_CASE("test antlr4 self parse"){
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
         morpher(utf16, dagGraph);
         std::string&& content=codeGenerator();
-        std::cout<<"p codeGenerator.getParserClass() "<<codeGenerator.getParserClass()<<std::endl;
         std::ofstream os("../tmp/"+codeGenerator.getParserClass()+".h");
         std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
         os.close();
@@ -173,7 +170,6 @@ TEST_CASE("test xpath 3.1"){
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
         morpher(utf16, dagGraph);
         std::string&& content=codeGenerator();
-        std::cout<<"p codeGenerator.getParserClass() "<<codeGenerator.getParserClass()<<std::endl;
         std::ofstream os("../tmp/"+codeGenerator.getParserClass()+".h");
         std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
         os.close();
@@ -185,7 +181,6 @@ TEST_CASE("test xpath 3.1"){
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
         morpher(utf16, dagGraph);
         std::string&& content=codeGenerator();
-        std::cout<<"p codeGenerator.getParserClass() "<<codeGenerator.getParserClass()<<std::endl;
         std::ofstream os("../tmp/"+codeGenerator.getParserClass()+".h");
         std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
         os.close();

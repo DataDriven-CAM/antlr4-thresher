@@ -15,6 +15,7 @@
 #include "parse/u16ncmp.h"
 
 #include "graph/container/compressed_graph.hpp"
+{token_vocab}
 
 namespace {namespace} {{
 
@@ -86,7 +87,7 @@ namespace {namespace} {{
     
     std::u16string::const_iterator itEnd;
     bool EndOfFile(std::u16string::const_iterator& it){{
-        return it!=itEnd;
+        return it==itEnd;
     }};
 
 

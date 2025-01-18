@@ -132,7 +132,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
 //            size_t d=v[0];
 //            std::format_to(ctx.out(), vf, d);
 //        }
-         std::cout<<"tokens "<<v.size()<<std::endl;
+//         std::cout<<"tokens "<<v.size()<<std::endl;
         for (int i= 0; i < v.size(); ++i){
             std::string iA=std::get<0>(v[i]);
             std::string eA=std::get<1>(v[i]);
@@ -262,6 +262,7 @@ namespace sylvanmats::publishing{
     class CodeGenerator{
         protected:
         std::string ns;
+        T tokenVocab{};
         T grammarTemplate{};
         T lexerRuleTemplate{};
         T parserRuleTemplate{};
@@ -292,15 +293,18 @@ namespace sylvanmats::publishing{
             auto classArg=fmt::arg("class", parserClass);
             //T ns="code";
             auto nsArg=fmt::arg("namespace", ns);
+            T lexerInclude=(!tokenVocab.empty())? "#include \""+tokenVocab+".h\"": "";
+            auto liArg=fmt::arg("token_vocab", lexerInclude);
             auto tArg=fmt::arg("tokens", tokens);
             auto rArg=fmt::arg("lexer_rules", lexerRuleClasses);
             //T rl="//rules ladder here...";
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
-              T ret=render(grammarTemplate, fmt::make_format_args(classArg, nsArg, tArg, rArg, rlArg));
+              T ret=render(grammarTemplate, fmt::make_format_args(classArg, nsArg, liArg, tArg, rArg, rlArg));
               return ret;
           };
 
-        void setParserClass(T parserClass){this->parserClass=parserClass;std::cout << std::stacktrace::current() << std::endl;};
+        void setParserClass(T parserClass){this->parserClass=parserClass;};
+        void setTokenVocab(T tokenVocab){this->tokenVocab=tokenVocab;};
         T& getParserClass(){return parserClass;};
         void appendToken(T t){tokens.push_back(t);};
         void appendLexerRuleClass(T t, T mode, bool frag, T expr){
