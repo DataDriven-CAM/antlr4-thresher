@@ -7,6 +7,8 @@ namespace sylvanmats::antlr4::parse {
     enum TOKEN{
         ROOT,
         DOC_COMMENT,
+        BLOCK_COMMENT,
+        LINE_COMMENT,
         INT,
         STRING_LITERAL,
         OPTIONS,

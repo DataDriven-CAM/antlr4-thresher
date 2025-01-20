@@ -1,4 +1,5 @@
 #pragma once
+{block_comment}
 
 #include <stdlib.h>
 #include <cmath>
@@ -54,6 +55,9 @@ namespace {namespace} {{
 
         //lexer rules
 {lexer_rules}
+
+        //parser rules
+{parser_rules}
 
     void operator()(std::u16string::const_iterator& it, std::function<void(G& dagGraph)> apply){{
         vertices.push_back({{.start=&(*it), .stop=&(*it), .token=ROOT}});

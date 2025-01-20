@@ -111,6 +111,32 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string>>>{
 };
 
 template <>
+struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::string>>>{
+    auto parse(format_parse_context& ctx) -> format_parse_context::iterator{
+        return ctx.begin();
+    }
+    
+     auto format(const std::vector<std::tuple<std::string, std::string, std::string>>& v, format_context& ctx) const -> format_context::iterator{
+        std::string indentation(8, ' ');
+         //std::cout<<"tokens "<<v.size()<<std::endl;
+        for (int i= 0; i < v.size(); ++i){
+            std::string iA=std::get<0>(v[i]);
+            std::string fA=std::get<1>(v[i]);
+            std::string eA=std::get<2>(v[i]);
+            auto iArg=fmt::arg("indent", indentation);
+            auto fArg=fmt::arg("function", iA);
+            auto eArg=fmt::arg("expression", eA);
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&)> {function} = [](std::u16string::const_iterator& it) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
+        }
+        constexpr typename std::string::value_type* fmt={"\n"};
+        return fmt::format_to(ctx.out(), fmt);
+    }
+    // ...
+    bool        curly{false};
+    std::string value_format;
+};
+
+template <>
 struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::string, bool>>>{
     auto parse(format_parse_context& ctx) -> format_parse_context::iterator{
         return ctx.begin();
@@ -262,6 +288,7 @@ namespace sylvanmats::publishing{
     class CodeGenerator{
         protected:
         std::string ns;
+        T blockComment{};
         T tokenVocab{};
         T grammarTemplate{};
         T lexerRuleTemplate{};
@@ -270,6 +297,7 @@ namespace sylvanmats::publishing{
         std::vector<T> tokens;
         std::vector<std::tuple<T, T>> lexerRuleClasses;
          std::vector<std::tuple<std::string, std::string, std::string, bool>> ladderRules;
+        std::vector<std::tuple<T, T, T>> parserRuleClasses;
         //std::vector<std::tupe<std::string, std::args>> rules;
 
         public:
@@ -290,6 +318,8 @@ namespace sylvanmats::publishing{
         virtual ~CodeGenerator() = default;
 
         T operator()(){
+            T bc=(!blockComment.empty())? blockComment : "\n";
+            auto bcArg=fmt::arg("block_comment", bc);
             auto classArg=fmt::arg("class", parserClass);
             //T ns="code";
             auto nsArg=fmt::arg("namespace", ns);
@@ -297,21 +327,28 @@ namespace sylvanmats::publishing{
             auto liArg=fmt::arg("token_vocab", lexerInclude);
             auto tArg=fmt::arg("tokens", tokens);
             auto rArg=fmt::arg("lexer_rules", lexerRuleClasses);
-            //T rl="//rules ladder here...";
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
-              T ret=render(grammarTemplate, fmt::make_format_args(classArg, nsArg, liArg, tArg, rArg, rlArg));
+            auto pArg=fmt::arg("parser_rules", parserRuleClasses);
+              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, liArg, nsArg, classArg, tArg, rArg, rlArg, pArg));
               return ret;
           };
 
+        void setBlockComment(T blockComment){this->blockComment=blockComment;};
         void setParserClass(T parserClass){this->parserClass=parserClass;};
-        void setTokenVocab(T tokenVocab){this->tokenVocab=tokenVocab;};
         T& getParserClass(){return parserClass;};
+        void setTokenVocab(T tokenVocab){this->tokenVocab=tokenVocab;};
         void appendToken(T t){tokens.push_back(t);};
         void appendLexerRuleClass(T t, T mode, bool frag, T expr){
             lexerRuleClasses.push_back(std::make_tuple(t, expr));
             T cT=t;
             std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            
             if(!frag)ladderRules.push_back(std::make_tuple(t, mode, cT, true));
+        };
+        void appendParserRuleClass(T t, T mode, bool frag, T expr){
+            parserRuleClasses.push_back(std::make_tuple(t, mode, expr));
+            T cT=t;
+            //std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            
+            //if(!frag)ladderRules.push_back(std::make_tuple(t, mode, cT, true));
         };
         protected:
 

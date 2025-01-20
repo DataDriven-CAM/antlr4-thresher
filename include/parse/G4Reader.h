@@ -40,13 +40,14 @@ namespace sylvanmats::antlr4::parse {
         
         std::filesystem::path directory="./";
         std::unordered_map<std::u16string, std::u16string> options;
+        std::vector<std::u16string> tokens;
     
     public:
         G4Reader() = default;
         G4Reader(const G4Reader& orig) = delete;
         virtual ~G4Reader() = default;
-        void operator()(std::filesystem::path& filePath, std::function<void(std::u16string& utf16, G& dagGraph)> apply);
-        void operator()(std::u16string& utf16, std::function<void(std::u16string& utf16, G& dagGraph)> apply);
+        void operator()(std::filesystem::path& filePath, std::function<void(std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, G& dagGraph)> apply);
+        void operator()(std::u16string& utf16, std::function<void(std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, G& dagGraph)> apply);
         void display();
 
     private:
@@ -84,20 +85,14 @@ namespace sylvanmats::antlr4::parse {
 
         std::function<bool(std::u16string::const_iterator&)> Not = [&](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=Tilde(temp); if(ret)it=temp;return ret;};
 
-        bool DocComment(TOKEN token, PARSE_MODE mode, std::u16string::const_iterator& it, std::u16string::const_iterator itEnd){
+        bool DocComment(TOKEN token, PARSE_MODE mode, std::u16string::const_iterator& it){
                 if(std::u16ncmp(&(*it), u"/**", 3)==0){
-                    vertices.push_back({.start=&(*it), .token=token});
-                    //lemon::ListGraph::Node n=astGraph.addNode();
-                    //astNode[n].start=&(*it);
-                    //astNode[n].token=token;
-                    //astNode[n].mode=mode;
-                    std::advance(it, 3);
+                   std::advance(it, 3);
                     bool hitStop=false;
                     while(!hitStop && it!=itEnd){
                         if(std::u16ncmp(&(*it), u"*/", 2)==0){
                             std::advance(it, 2);
                             //astNode[n].stop=&(*it);
-                            vertices.back().stop=&(*it);
                             hitStop=true;
                         }
                         else ++it;
@@ -107,7 +102,7 @@ namespace sylvanmats::antlr4::parse {
                 else return false;
         };
 
-        bool BlockComment(std::u16string::const_iterator& it, std::u16string::const_iterator itEnd){
+        bool BlockComment(std::u16string::const_iterator& it){
             if(std::u16ncmp(&(*it), u"/*", 2)==0){
                 std::advance(it, 2);
                 bool hitStop=false;
@@ -123,12 +118,17 @@ namespace sylvanmats::antlr4::parse {
             else return false;
         };
 
-        bool LineComment(std::u16string::const_iterator& it, std::u16string::const_iterator itEnd){
+        bool LineComment(std::u16string::const_iterator& it){
             if(std::u16ncmp(&(*it), u"//", 2)==0){
                 std::advance(it, 2);
                 bool hitStop=false;
                 while(!hitStop && it!=itEnd){
-                    if((*it)==u'\r'|| (*it)==u'\n'){
+                    if((*it)==u'\r' && (*std::next(it))==u'\n'){
+                        it+=2;
+                        hitStop=true;
+                    }
+                    else if((*it)==u'\n'){
+                        it++;
                         hitStop=true;
                     }
                     else ++it;

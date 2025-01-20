@@ -83,7 +83,7 @@ Digit : '0' .. '9';
     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
     std::u16string utf16 = utf16conv.from_bytes(content);
     sylvanmats::antlr4::parse::G4Reader g4Reader;
-    g4Reader(utf16, [](std::u16string& utf16, sylvanmats::antlr4::parse::G& dagGraph){
+    g4Reader(utf16, [](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
         std::string ns="sylvanmats::antlr4::parse";
         sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
         std::filesystem::path directory="./";
@@ -102,7 +102,7 @@ Digit : '0' .. '9';
 }
 
 TEST_CASE("test antlr4 lex basic parse"){
-    std::filesystem::path filePath="../../cpp_modules/grammars-v4/antlr/antlr4/LexBasic.g4";
+    std::filesystem::path filePath="../cpp_modules/grammars-v4/antlr/antlr4/LexBasic.g4";
     std::filesystem::path directory="./";
     if(filePath.has_parent_path())
         directory=filePath.parent_path();
@@ -111,7 +111,7 @@ TEST_CASE("test antlr4 lex basic parse"){
     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
     std::u16string utf16 = utf16conv.from_bytes(mmapAntlr.begin());
     sylvanmats::antlr4::parse::G4Reader g4Reader;
-    g4Reader(utf16, [&directory](std::u16string& utf16, sylvanmats::antlr4::parse::G& dagGraph){
+    g4Reader(utf16, [&directory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
         std::string ns="sylvanmats::antlr4::parse";
         std::filesystem::path directory="./";
         sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
@@ -133,7 +133,7 @@ TEST_CASE("test antlr4 self parse"){
     if(filePath.has_parent_path())
         directory=filePath.parent_path();
     sylvanmats::antlr4::parse::G4Reader g4Reader;
-    g4Reader(filePath, [&directory](std::u16string& utf16, sylvanmats::antlr4::parse::G& dagGraph){
+    g4Reader(filePath, [&directory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
         std::string ns="sylvanmats::antlr4::parse";
         sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
@@ -146,9 +146,13 @@ TEST_CASE("test antlr4 self parse"){
     g4Reader.display();
     std::filesystem::path stFilePath="../cpp_modules/grammars-v4/antlr/antlr4/ANTLRv4Parser.g4";
     sylvanmats::antlr4::parse::G4Reader g4PReader;
-    g4PReader(stFilePath, [&directory](std::u16string& utf16, sylvanmats::antlr4::parse::G& dagGraph){
+    g4PReader(stFilePath, [&directory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
         std::string ns="sylvanmats::antlr4::parse";
         sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
+        if(options.count(u"tokenVocab")){
+            codeGenerator.setTokenVocab(utf16conv.to_bytes(options[u"tokenVocab"]));
+        }
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
         morpher(utf16, dagGraph);
         std::string&& content=codeGenerator();
@@ -164,7 +168,7 @@ TEST_CASE("test xpath 3.1"){
     if(filePath.has_parent_path())
         directory=filePath.parent_path();
     sylvanmats::antlr4::parse::G4Reader g4Reader;
-    g4Reader(filePath, [&directory](std::u16string& utf16, sylvanmats::antlr4::parse::G& dagGraph){
+    g4Reader(filePath, [&directory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
         std::string ns="sylvanmats::antlr4::parse";
         sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
@@ -174,10 +178,53 @@ TEST_CASE("test xpath 3.1"){
         std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
         os.close();
    });
+    std::cout<<"xpath31 parser"<<std::endl;
     std::filesystem::path stFilePath="../cpp_modules/grammars-v4/xpath/xpath31/XPath31Parser.g4";
-    g4Reader(stFilePath, [&directory](std::u16string& utf16, sylvanmats::antlr4::parse::G& dagGraph){
+    sylvanmats::antlr4::parse::G4Reader g4PReader;
+    g4PReader(stFilePath, [&directory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
         std::string ns="sylvanmats::antlr4::parse";
         sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
+        if(options.count(u"tokenVocab")){
+            std::cout<<"xpath31 "<<utf16conv.to_bytes(options[u"tokenVocab"])<<" "<<codeGenerator.getParserClass()<<std::endl;
+            codeGenerator.setTokenVocab(utf16conv.to_bytes(options[u"tokenVocab"]));
+        }
+        sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
+        morpher(utf16, dagGraph);
+        std::string&& content=codeGenerator();
+        std::ofstream os("../tmp/"+codeGenerator.getParserClass()+".h");
+        std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
+        os.close();
+    });
+}
+
+TEST_CASE("test toml parse"){
+    std::filesystem::path filePath="../cpp_modules/grammars-v4/toml/TomlLexer.g4";
+    std::filesystem::path directory="./";
+    if(filePath.has_parent_path())
+        directory=filePath.parent_path();
+    sylvanmats::antlr4::parse::G4Reader g4Reader;
+    g4Reader(filePath, [&directory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
+        std::string ns="sylvanmats::antlr4::parse";
+        sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
+        sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
+        morpher(utf16, dagGraph);
+        std::string&& content=codeGenerator();
+        std::ofstream os("../tmp/"+codeGenerator.getParserClass()+".h");
+        std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
+        os.close();
+   });
+    std::cout<<"toml parser"<<std::endl;
+    std::filesystem::path stFilePath="../cpp_modules/grammars-v4/toml/TomlParser.g4";
+    sylvanmats::antlr4::parse::G4Reader g4PReader;
+    g4PReader(stFilePath, [&directory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
+        std::string ns="sylvanmats::antlr4::parse";
+        sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(ns);
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
+        if(options.count(u"tokenVocab")){
+            std::cout<<"toml "<<utf16conv.to_bytes(options[u"tokenVocab"])<<" "<<codeGenerator.getParserClass()<<std::endl;
+            codeGenerator.setTokenVocab(utf16conv.to_bytes(options[u"tokenVocab"]));
+        }
         sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
         morpher(utf16, dagGraph);
         std::string&& content=codeGenerator();

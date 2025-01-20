@@ -20,7 +20,7 @@ namespace std{
 
 namespace sylvanmats::antlr4::parse {
 
-    void G4Reader::operator()(std::filesystem::path& filePath, std::function<void(std::u16string& utf16, G& dagGraph)> apply){
+    void G4Reader::operator()(std::filesystem::path& filePath, std::function<void(std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, G& dagGraph)> apply){
         try {
             if(filePath.has_parent_path())
                 directory=filePath.parent_path();
@@ -34,7 +34,7 @@ namespace sylvanmats::antlr4::parse {
         }
     }
 
-    void G4Reader::operator()(std::u16string& utf16, std::function<void(std::u16string& utf16, G& dagGraph)> apply){
+    void G4Reader::operator()(std::u16string& utf16, std::function<void(std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, G& dagGraph)> apply){
         try {
             std::wstring_convert<std::codecvt_utf8<char16_t>, char16_t> cv;
             //std::cout<<"modeMap size "<<modeMap.size()<<" "<<tokenMap.size()<<std::endl;
@@ -50,21 +50,35 @@ namespace sylvanmats::antlr4::parse {
             itEnd=utf16.end();
             std::u16string::const_iterator temp=it;
             while(it!=utf16.end()){
-            if(DocComment(DOC_COMMENT, DEFAULT, it, utf16.end())){
+            if(DocComment(DOC_COMMENT, DEFAULT, it)){
+                /*if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
+                depthProfile[depth].push_back(vertices.size()-1);
+                edges.push_back(std::make_tuple(0, vertices.size()-1, 1));*/
+                std::u16string label(&(*temp), &(*it));
+                std::cout<<"DocComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
-            else if(BlockComment(it, utf16.end())){
+            else if(BlockComment(it)){
+                /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LINE_COMMENT});
+                if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
+                depthProfile[depth].push_back(vertices.size()-1);
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));*/
+                std::u16string label(&(*temp), &(*it));
+                std::cout<<"BlockComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
-            else if(LineComment(it, utf16.end())){
+            else if(LineComment(it)){
+                /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LINE_COMMENT});
+                if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
+                depthProfile[depth].push_back(vertices.size()-1);
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                depth=1;*/
+                std::u16string label(&(*temp), &(*it));
+                std::cout<<"LineComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
-            else if((*it)==u'0'){
-                vertices.push_back({.start=&(*it), .stop=&(*it), .token=INT});
-                //lemon::ListGraph::Node n=astGraph.addNode();
-                //astNode[n].start=&(*it);
-                //astNode[n].token=INT;
-                //astNode[n].stop=&(*it);
-                ++it;
-            }
-            else if((*it)>=u'1' && (*it)<=u'9'){
+            else if((*it)==u'0' || ((*it)>=u'1' && (*it)<=u'9')){
                 vertices.push_back({.start=&(*it), .token=INT});
                 //lemon::ListGraph::Node n=astGraph.addNode();
                 //astNode[n].start=&(*it);
@@ -79,6 +93,12 @@ namespace sylvanmats::antlr4::parse {
                 }
                 //astNode[n].stop=&(*it);
                 vertices.back().stop=&(*it);
+                if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
+                depthProfile[depth].push_back(vertices.size()-1);
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                depth=1;
             }
             else if([&]()->bool{
                 temp=it;
@@ -110,11 +130,11 @@ namespace sylvanmats::antlr4::parse {
                 std::advance(it, 7);
                 vertices.back().stop=&(*it);
                 while(it!=utf16.end()){
-                    if(DocComment(OPT_DOC_COMMENT, Options, it, utf16.end())){
+                    if(DocComment(OPT_DOC_COMMENT, Options, it)){
                     }
-                    else if(BlockComment(it, utf16.end())){
+                    else if(BlockComment(it)){
                     }
-                    else if(LineComment(it, utf16.end())){
+                    else if(LineComment(it)){
                     }
                     else if((*it)==u'{'){
                         vertices.push_back({.start=&(*it), .token=OPT_LBRACE, .mode=Options});
@@ -172,85 +192,50 @@ namespace sylvanmats::antlr4::parse {
             }
             else if(std::u16ncmp(&(*it), u"tokens", 6)==0){
                 vertices.push_back({.start=&(*it), .token=TOKENS, .mode=Tokens});
-                //lemon::ListGraph::Node n=astGraph.addNode();
-                //astNode[n].start=&(*it);
-                //astNode[n].token=TOKENS;
-                //astNode[n].mode=Tokens;
                 std::advance(it, 6);
-                //astNode[n].stop=&(*it);
                 vertices.back().stop=&(*it);
                 while(it!=utf16.end()){
-                    if(DocComment(TOK_DOC_COMMENT, Tokens, it, utf16.end())){
+                    if(DocComment(TOK_DOC_COMMENT, Tokens, it)){
                     }
-                    else if(BlockComment(it, utf16.end())){
+                    else if(BlockComment(it)){
                     }
-                    else if(LineComment(it, utf16.end())){
+                    else if(LineComment(it)){
                     }
                     else if((*it)==u'{'){
                         vertices.push_back({.start=&(*it), .token=TOK_LBRACE, .mode=Tokens});
                         ++it;
+                        temp=it;
                         vertices.back().stop=&(*it);
                         if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                         depthProfile[depth].push_back(vertices.size()-1);
-                        bool hit=false;
-                        size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                        if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                        edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
                         depth++;
-                    }
-                    else if((*it)==u'}'){
-                        vertices.push_back({.start=&(*it), .token=TOK_RBRACE, .mode=Tokens});
+                        while(it!=utf16.end() && (*it)!=u'}'){
+                            it++;
+                        }
+                        vertices.push_back({.start=&(*temp), .stop=&(*it), .token=ARGUMENT});
+                        edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
+                        std::u16string arg(vertices.back().start, vertices.back().stop);
+                        std::u16string delim=u",";
+                        for (const auto& word : arg | std::views::split(delim)){
+                                std::u16string_view wv(word.begin(), word.end());
+                                wv.remove_prefix(std::min(wv.find_first_not_of(u" \t\r\v\n"), wv.size()));
+                                wv.remove_suffix(std::min(wv.size() - wv.find_last_not_of(u" \t\r\v\n") - 1, wv.size()));
+                            std::u16string w(wv.begin(), wv.end());
+                            if(w.empty())continue;
+                            std::cout<<"token: "<<cv.to_bytes(w)<<std::endl;
+                            tokens.push_back(w  );
+                        }                        
+                        vertices.push_back({.start=&(*it), .token=TOK_RBRACE});
                         ++it;
                         vertices.back().stop=&(*it);
                         if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                         depthProfile[depth].push_back(vertices.size()-1);
                         bool hit=false;
                         size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                        if(hit)edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
+                        if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                         depth=1;
                         break;
-                    }
-                    else if([&]()->bool{
-                        if(NameStartChar(it)){
-                            vertices.push_back({.start=&(*it), .token=TOK_ID, .mode=Tokens});
-                            do{
-                            ++it;                    
-                            }while(NameChar(it));
-                            vertices.back().stop=&(*it);
-                            std::u16string label(vertices.back().start, vertices.back().stop);
-                                    //std::cout<<"ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
-                            if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
-                            depthProfile[depth].push_back(vertices.size()-1);
-                            if(depth==0)edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
-                            else{
-                                bool hit=false;
-                                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
-                            }
-                            return true;
-                        }
-                        return false;
-                    }()){
-
-                    }
-                    else if((*it)==u'.'){
-                        vertices.push_back({.start=&(*it), .token=TOK_DOT, .mode=Tokens});
-                        ++it;
-                        vertices.back().stop=&(*it);
-                        if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
-                        depthProfile[depth].push_back(vertices.size()-1);
-                        bool hit=false;
-                        size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                        if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
-                    }
-                    else if((*it)==u','){
-                        vertices.push_back({.start=&(*it), .token=TOK_COMMA, .mode=Tokens});
-                        ++it;
-                        vertices.back().stop=&(*it);
-                        if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
-                        depthProfile[depth].push_back(vertices.size()-1);
-                        bool hit=false;
-                        size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                        if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                     }
                     else ++it;
                     count++;
@@ -259,19 +244,20 @@ namespace sylvanmats::antlr4::parse {
             }
             else if(std::u16ncmp(&(*it), u"channels", 8)==0){
                 vertices.push_back({.start=&(*it), .token=CHANNELS, .mode=Channels});
-                //lemon::ListGraph::Node n=astGraph.addNode();
-                //astNode[n].start=&(*it);
-                //astNode[n].token=CHANNELS;
-                //astNode[n].mode=Channels;
                 std::advance(it, 8);
-                //astNode[n].stop=&(*it);
                 vertices.back().stop=&(*it);
                 while(it!=utf16.end()){
-                    if(DocComment(CHN_DOC_COMMENT, Channels, it, utf16.end())){
+                    if(DocComment(CHN_DOC_COMMENT, Channels, it)){
+                        std::u16string label(&(*temp), &(*it));
+                        std::cout<<"DocComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     }
-                    else if(BlockComment(it, utf16.end())){
+                    else if(BlockComment(it)){
+                        std::u16string label(&(*temp), &(*it));
+                        std::cout<<"BlockComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     }
-                    else if(LineComment(it, utf16.end())){
+                    else if(LineComment(it)){
+                        std::u16string label(&(*temp), &(*it));
+                        std::cout<<"LineComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     }
                     else if((*it)==u'{'){
                         vertices.push_back({.start=&(*it), .token=CHN_LBRACE, .mode=Channels});
@@ -349,6 +335,7 @@ namespace sylvanmats::antlr4::parse {
                 depth++;
             }
             else if(std::u16ncmp(&(*it), u"parser", 6)==0){
+                std::cout<<"parser: "<<std::endl;
                 vertices.push_back({.start=&(*it), .token=PARSER});
                 std::advance(it, 6);
                 vertices.back().stop=&(*it);
@@ -359,11 +346,7 @@ namespace sylvanmats::antlr4::parse {
             }
             else if(std::u16ncmp(&(*it), u"lexer", 5)==0){
                 vertices.push_back({.start=&(*it), .token=LEXER});
-                //lemon::ListGraph::Node n=astGraph.addNode();
-                //astNode[n].start=&(*it);
-                //astNode[n].token=LEXER;
                 std::advance(it, 5);
-                //astNode[n].stop=&(*it);
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
@@ -371,6 +354,7 @@ namespace sylvanmats::antlr4::parse {
                 depth++;
             }
             else if(std::u16ncmp(&(*it), u"grammar", 7)==0){
+                std::cout<<"grammar: "<<std::endl;
                 vertices.push_back({.start=&(*it), .token=GRAMMAR});
                 std::advance(it, 7);
                 vertices.back().stop=&(*it);
@@ -386,7 +370,7 @@ namespace sylvanmats::antlr4::parse {
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
                 edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
-                //depth=1;
+                depth++;
             }
             else if(std::u16ncmp(&(*it), u"mode", 4)==0){
                 vertices.push_back({.start=&(*it), .token=MODE});
@@ -425,7 +409,7 @@ namespace sylvanmats::antlr4::parse {
                 depthProfile[depth].push_back(vertices.size()-1);
                 bool hit=false;
                 size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                if(hit)edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 depth=1;
             }
             else if((*it)==u'('){
@@ -606,7 +590,8 @@ namespace sylvanmats::antlr4::parse {
                     }while(NameChar(it));
                     vertices.back().stop=&(*it);
                     std::u16string label(vertices.back().start, vertices.back().stop);
-                            //std::cout<<"ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
+                    //if(std::islower(label.at(0)))
+                    //        std::cout<<"ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                     depthProfile[depth].push_back(vertices.size()-1);
                     if(depth==0)edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
@@ -641,7 +626,7 @@ namespace sylvanmats::antlr4::parse {
 //                std::cout<<"vertex "<<uid<<std::endl;
                 return graph::copyable_vertex_t<graph::vertex_id_t<G>, ast_node>{uid, nm};
               });
-              apply(utf16, dagGraph);
+              apply(utf16, options, dagGraph);
 
         } catch (std::exception& e) {
             std::cout << e.what() << std::endl;
