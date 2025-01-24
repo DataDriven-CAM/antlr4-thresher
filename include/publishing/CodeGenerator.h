@@ -324,12 +324,16 @@ namespace sylvanmats::publishing{
             //T ns="code";
             auto nsArg=fmt::arg("namespace", ns);
             T lexerInclude=(!tokenVocab.empty())? "#include \""+tokenVocab+".h\"": "";
-            auto liArg=fmt::arg("token_vocab", lexerInclude);
+            auto tliArg=fmt::arg("token_vocab_include", lexerInclude);
+            auto tlcArg=fmt::arg("token_vocab_class", tokenVocab);
+            T tokenVocabInstance=tokenVocab;
+            if(!tokenVocabInstance.empty())tokenVocabInstance.at(0)=std::tolower(tokenVocabInstance.at(0));
+            auto tliiArg=fmt::arg("token_vocab_instance", tokenVocabInstance);
             auto tArg=fmt::arg("tokens", tokens);
             auto rArg=fmt::arg("lexer_rules", lexerRuleClasses);
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
             auto pArg=fmt::arg("parser_rules", parserRuleClasses);
-              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, liArg, nsArg, classArg, tArg, rArg, rlArg, pArg));
+              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, rArg, rlArg, pArg));
               return ret;
           };
 

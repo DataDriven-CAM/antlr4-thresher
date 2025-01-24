@@ -112,6 +112,7 @@ namespace sylvanmats::dsl{
         bool ret=false;
         std::u16string prevId{};
         bool rangeOn=false;
+        sylvanmats::antlr4::parse::TOKEN prevToken=sylvanmats::antlr4::parse::ROOT;
         for (auto&& se : graph::edges(dagGraph, source)){
             auto& v=dagGraph[graph::target_id(dagGraph, se)];
             auto& vv=graph::vertex_value(dagGraph, v);
@@ -119,7 +120,7 @@ namespace sylvanmats::dsl{
             if(vv.token==sylvanmats::antlr4::parse::ID){
                 std::u16string expr2(vv.start, vv.stop);
                 if(expr2.compare(u"EOF")==0)expr2=u"EndOfFile";
-                if(depth>2 && !orOn)expr+=u" && ";
+                if(prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::ROOT)expr+=u" && ";
                 expr+=expr2+u"(temp)";
                 std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                 //std::cout<<"recurse ID "<<cv.to_bytes(expr2)<<" "<<size(graph::edges(dagGraph, v))<<std::endl;
@@ -147,7 +148,15 @@ namespace sylvanmats::dsl{
                     for(std::u16string::iterator itC=expr2.begin();itC!=expr2.end();itC++){
                         bool esc=false;
                         if((*itC)==u'\\'){itC++;esc=true;}
-                        if((*itC)==u'-')expr+=u"&& ";
+                        if((*itC)==u'+' && (*std::next(itC))==u'-'){
+                            expr+=u"(*temp)==u'";
+                            expr+=std::u16string(1, (*itC));
+                            expr+=u"' || (*temp)==u'";
+                            itC++;
+                            expr+=std::u16string(1, (*itC));
+                            expr+=u"'";
+                        }
+                        else if((*itC)==u'-' && (*std::next(itC))!=u']')expr+=u"&& ";
                         else if((*std::next(itC))==u'-'){
                             expr+=u"(*temp)>=u'";
                             if(esc || (*itC)==L'\'')expr+=u"\\";
@@ -186,36 +195,44 @@ namespace sylvanmats::dsl{
                 expr=u"false;while"+expr+u"ret=true";
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
-                expr=u"false;if"+expr+u"ret=true";
+                expr+=u" ? true : false";
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){
                 rangeOn=true;
                 std::cout<<"rangeOn "<<size(graph::edges(dagGraph, v))<<std::endl;
             }
+            else if(vv.token==sylvanmats::antlr4::parse::RARROW){
+                //rangeOn=true;
+                std::cout<<"rarrow "<<size(graph::edges(dagGraph, v))<<std::endl;
+                break;
+            }
             else if(vv.token==sylvanmats::antlr4::parse::STRING_LITERAL){
                 std::u16string expr2(vv.start, vv.stop);
+                if(prevToken==sylvanmats::antlr4::parse::STRING_LITERAL)expr+=u" && ";
                 if(expr2.size()==3){
                     if(rangeOn){
-                        expr=u"(*temp)>=u"+prevId+u" && (*temp)<=u"+expr+u";temp++";
+                        expr+=u"(*temp)>=u"+prevId+u" && (*temp)<=u"+expr+u";temp++";
                     }
                     else
-                        expr=u"(*temp)==u"+expr2+u";temp++";
+                        expr+=u"(*temp)==u"+expr2+u";temp++";
                 }
                 else if(expr2.size()>3){
-                    expr2.at(0)=u'"';
-                    expr2.at(expr2.size()-1)=u'"';
+                    std::u16string_view expr2v=expr2.substr(1, expr2.size()-2);
+                    //expr2.at(0)=u'"';
+                    //expr2.at(expr2.size()-1)=u'"';
                     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                     std::u16string text{};
-                    for(std::u16string::iterator eIt=expr2.begin();eIt!=expr2.end();eIt++){
-                        if((*eIt)=='"' && (std::next(eIt)!=expr2.end()))text.append(1, u'\\');
+                    for(std::u16string_view::iterator eIt=expr2v.begin();eIt!=expr2v.end();eIt++){
+                        if((*eIt)=='"')text.append(1, u'\\');
                         text.append(1, (*eIt));
                     }
-                    expr+=u"std::u16ncmp(&(*temp), u"+text+u", "+cv.from_bytes(std::to_string(expr2.size()-2))+u")==0";
+                    expr+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
                 }
                 prevId=expr2;
                 orOn=false;
                 rangeOn=false;
             }
+            prevToken=vv.token;
         }
         depth--;
         return ret;

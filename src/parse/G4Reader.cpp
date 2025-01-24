@@ -579,8 +579,10 @@ namespace sylvanmats::antlr4::parse {
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
-                //depth++;
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                depth++;
             }
             else if([&]()->bool{
                 if(NameStartChar(it)){

@@ -16,7 +16,7 @@
 #include "parse/u16ncmp.h"
 
 #include "graph/container/compressed_graph.hpp"
-{token_vocab}
+{token_vocab_include}
 
 namespace {namespace} {{
 
@@ -47,6 +47,8 @@ namespace {namespace} {{
         G dagGraph;
         std::vector<ast_node> vertices;
         std::vector<std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>> edges;
+        
+        {token_vocab_class} {token_vocab_instance};
     
     public:
         {class}() = default;
