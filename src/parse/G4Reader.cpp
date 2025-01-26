@@ -54,8 +54,8 @@ namespace sylvanmats::antlr4::parse {
                 /*if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
                 edges.push_back(std::make_tuple(0, vertices.size()-1, 1));*/
-                std::u16string label(&(*temp), &(*it));
-                std::cout<<"DocComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
+                //std::u16string label(&(*temp), &(*it));
+                //std::cout<<"DocComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
             else if(BlockComment(it)){
                 /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LINE_COMMENT});
@@ -64,8 +64,8 @@ namespace sylvanmats::antlr4::parse {
                 bool hit=false;
                 size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));*/
-                std::u16string label(&(*temp), &(*it));
-                std::cout<<"BlockComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
+                //std::u16string label(&(*temp), &(*it));
+                //std::cout<<"BlockComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
             else if(LineComment(it)){
                 /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LINE_COMMENT});
@@ -75,8 +75,8 @@ namespace sylvanmats::antlr4::parse {
                 size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 depth=1;*/
-                std::u16string label(&(*temp), &(*it));
-                std::cout<<"LineComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
+                //std::u16string label(&(*temp), &(*it));
+                //std::cout<<"LineComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
             else if((*it)==u'0' || ((*it)>=u'1' && (*it)<=u'9')){
                 vertices.push_back({.start=&(*it), .token=INT});
@@ -172,7 +172,6 @@ namespace sylvanmats::antlr4::parse {
                                 else p=std::u16string(iw.begin(), iw.end());
                                 hitV=!hitV;
                             }
-                            std::cout<<"option: "<<cv.to_bytes(v)<<" "<<cv.to_bytes(p)<<std::endl;
                             options[v]=p;
                         }                        
                         vertices.push_back({.start=&(*it), .token=OPT_RBRACE});
@@ -326,7 +325,6 @@ namespace sylvanmats::antlr4::parse {
 
             }
             else if(std::u16ncmp(&(*it), u"import", 6)==0){
-                std::cout<<"g4 import "<<" "<<vertices.size()<<std::endl;
                 vertices.push_back({.start=&(*it), .token=IMPORT});
                 std::advance(it, 6);
                 vertices.back().stop=&(*it);
@@ -335,7 +333,6 @@ namespace sylvanmats::antlr4::parse {
                 depth++;
             }
             else if(std::u16ncmp(&(*it), u"parser", 6)==0){
-                std::cout<<"parser: "<<std::endl;
                 vertices.push_back({.start=&(*it), .token=PARSER});
                 std::advance(it, 6);
                 vertices.back().stop=&(*it);
@@ -354,7 +351,6 @@ namespace sylvanmats::antlr4::parse {
                 depth++;
             }
             else if(std::u16ncmp(&(*it), u"grammar", 7)==0){
-                std::cout<<"grammar: "<<std::endl;
                 vertices.push_back({.start=&(*it), .token=GRAMMAR});
                 std::advance(it, 7);
                 vertices.back().stop=&(*it);

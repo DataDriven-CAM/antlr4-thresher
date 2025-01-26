@@ -128,7 +128,7 @@ namespace sylvanmats::dsl{
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LPAREN){
-                if(depth>2 && !orOn)expr+=u" && ";
+                if(prevToken==sylvanmats::antlr4::parse::STRING_LITERAL && !orOn)expr+=u" && ";
                 expr+=u"(";
                 orOn=false;
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
@@ -195,7 +195,7 @@ namespace sylvanmats::dsl{
                 expr=u"false;while"+expr+u"ret=true";
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
-                expr+=u" ? true : false";
+                expr=u"[&expr, &temp]() {if("+expr+u"){temp++;return true;}else return false;}";
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){
                 rangeOn=true;

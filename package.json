@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": null,
   "dependencies": {
+    "CLI11": "CLIUtils/CLI11",
     "mio": "mandreyel/mio"
   },
   "devDependencies": {
