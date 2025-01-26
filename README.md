@@ -18,3 +18,13 @@ cnpm lib
 cnpm test
 
 ```
+This also compiles a runner tool called cantlrtool(name may change).
+
+Example use
+```
+cantlrtool ../grammars-v4/xpath/xpath31/XPath31Lexer.g4 ../grammars-v4/xpath/xpath31/XPath31Parser.g4 -o ./include/io/xpath
+
+cantlrtool --help
+
+```
+default namspace "sylvanmats::antlr4::parse"
