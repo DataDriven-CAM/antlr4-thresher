@@ -112,7 +112,7 @@ namespace sylvanmats::dsl{
         bool ret=false;
         std::u16string prevId{};
         bool rangeOn=false;
-        sylvanmats::antlr4::parse::TOKEN prevToken=sylvanmats::antlr4::parse::ROOT;
+        sylvanmats::antlr4::parse::TOKEN prevToken=graph::vertex_value(dagGraph, source).token;
         for (auto&& se : graph::edges(dagGraph, source)){
             auto& v=dagGraph[graph::target_id(dagGraph, se)];
             auto& vv=graph::vertex_value(dagGraph, v);
@@ -120,7 +120,7 @@ namespace sylvanmats::dsl{
             if(vv.token==sylvanmats::antlr4::parse::ID){
                 std::u16string expr2(vv.start, vv.stop);
                 if(expr2.compare(u"EOF")==0)expr2=u"EndOfFile";
-                if(prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::ROOT)expr+=u" && ";
+                if(prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr+=u" && ";
                 expr+=expr2+u"(temp)";
                 std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                 //std::cout<<"recurse ID "<<cv.to_bytes(expr2)<<" "<<size(graph::edges(dagGraph, v))<<std::endl;
@@ -208,7 +208,7 @@ namespace sylvanmats::dsl{
             }
             else if(vv.token==sylvanmats::antlr4::parse::STRING_LITERAL){
                 std::u16string expr2(vv.start, vv.stop);
-                if(prevToken==sylvanmats::antlr4::parse::STRING_LITERAL)expr+=u" && ";
+                if(prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr+=u" && ";
                 if(expr2.size()==3){
                     if(rangeOn){
                         expr+=u"(*temp)>=u"+prevId+u" && (*temp)<=u"+expr+u";temp++";

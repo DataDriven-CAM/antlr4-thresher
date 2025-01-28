@@ -27,4 +27,4 @@ cantlrtool ../grammars-v4/xpath/xpath31/XPath31Lexer.g4 ../grammars-v4/xpath/xpa
 cantlrtool --help
 
 ```
-default namspace "sylvanmats::antlr4::parse"
+default namespace "sylvanmats::antlr4::parse"

@@ -37,6 +37,7 @@ int main(int argc, char** argv, char **envp) {
         CLI11_PARSE(app, argc, argv);
 
         if(positional.size()>0){
+            if(!std::filesystem::exists(outDirectory))std::filesystem::create_directories(outDirectory);
             std::filesystem::path filePath=positional[0];
             if(filePath.has_parent_path())
                 directory=filePath.parent_path();
