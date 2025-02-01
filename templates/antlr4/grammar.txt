@@ -61,7 +61,8 @@ namespace {namespace} {{
         //parser rules
 {parser_rules}
 
-    void operator()(std::u16string::const_iterator& it, std::function<void(G& dagGraph)> apply){{
+    void operator()(std::u16string& utf16, std::function<void(G& dagGraph)> apply){{
+        std::u16string::const_iterator it = utf16.begin();
         vertices.push_back({{.start=&(*it), .stop=&(*it), .token=ROOT}});
         int count=0;
         int depth=0;

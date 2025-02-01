@@ -11,7 +11,7 @@
 
 #include "cantlrtool.h"
 
-#define FMT_HEADER_ONLY
+#define FMT_HEADER_ONLYS
 #include "graph/container/compressed_graph.hpp"
 
 #define protected public
