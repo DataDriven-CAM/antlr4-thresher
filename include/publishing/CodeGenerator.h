@@ -144,26 +144,13 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
     
      auto format(const std::vector<std::tuple<std::string, std::string, std::string, bool>>& v, format_context& ctx) const -> format_context::iterator{
         std::string indentation(12, ' ');
-//        const auto&& buf=ctx.out();
-//        if(curly){
-//            constexpr char* fmt={"{{"};
-//            std::format_to(ctx.out(), fmt);
-//        }
-//        else{
-//            constexpr char* fmt{"["};
-//            std::format_to(ctx.out(), fmt);            
-//        }
- //        if (v.size() > 0){
-//            const std::string_view vf=value_format;
-//            size_t d=v[0];
-//            std::format_to(ctx.out(), vf, d);
-//        }
+            auto iArg=fmt::arg("indent", indentation);
+            if(!v.empty())fmt::vformat_to(ctx.out(), "{indent}while(it!=utf16.end()){{\n", fmt::make_format_args(iArg));
 //         std::cout<<"tokens "<<v.size()<<std::endl;
         for (int i= 0; i < v.size(); ++i){
             std::string iA=std::get<0>(v[i]);
             std::string eA=std::get<1>(v[i]);
             std::string tA=std::get<2>(v[i]);
-            auto iArg=fmt::arg("indent", indentation);
             auto fArg=fmt::arg("function", iA);
             auto tArg=fmt::arg("token", tA);
             //auto eArg=fmt::arg("expression", eA);
@@ -172,8 +159,8 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             else
                 fmt::vformat_to(ctx.out(), "{indent}}}else if({function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, tArg));
         }
-        constexpr typename std::string::value_type* fmt={""};
-        return fmt::format_to(ctx.out(), fmt);
+        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}}}else{{it++;}}\ntemp=it;}}\n", fmt::make_format_args(iArg));
+        else return fmt::format_to(ctx.out(), "");
 //        if(curly){
 //            constexpr char* fmt={"}}"};
 //            return std::format_to(ctx.out(), fmt);
