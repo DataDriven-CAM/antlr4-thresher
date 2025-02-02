@@ -33,7 +33,7 @@ namespace sylvanmats::dsl{
 
     void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v){
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
-        std::u16string expr{};
+        std::vector<std::u16string> expr{std::u16string{}};
         std::u16string slabel{};
         std::u16string label{};
         bool block=false;
@@ -48,17 +48,21 @@ namespace sylvanmats::dsl{
             auto& nv=graph::vertex_value(dagGraph, o);
             //std::cout<<" "<<(nv.stop-nv.start)<<" "<<nv.mode<<" "<<nu.token<<"\t\t"<<cv.to_bytes(label)<<" o inc edges#: "<<size(graph::edges(dagGraph, o))<<std::endl;
             if(nv.token==sylvanmats::antlr4::parse::ID){
-                if(!expr.empty())expr.clear();
+                if(expr.size()>=2)expr.resize(1);
+                if(!expr.back().empty())expr.back().clear();
                 slabel.assign(nu.start, nu.stop);
                 label.assign(nv.start, nv.stop);
             }
             else if(nv.token==sylvanmats::antlr4::parse::COLON && !label.empty()){
+                expr.push_back(std::u16string{});
                 recurseLexerRule(dagGraph, o, expr);
-                if(expr.empty())expr=u"false";
+                if(expr.back().empty())expr.back()=u"false";
+                std::u16string exprLine{};
+                for(std::u16string& entry : expr)exprLine.append(entry);
                 if(std::isupper(label.at(0)))
-                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), "", frag, cv.to_bytes(expr));
+                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), "", frag, cv.to_bytes(exprLine));
                 else
-                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", frag, cv.to_bytes(expr));
+                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", frag, cv.to_bytes(exprLine));
                 std::transform(label.cbegin(), label.cend(), label.begin(), [](const char16_t& c){return std::toupper(c);});
                 codeGenerator.appendToken(cv.to_bytes(label));
                 label.clear();
@@ -107,7 +111,7 @@ namespace sylvanmats::dsl{
         }
     }
 
-    bool Morpher::recurseLexerRule(sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& source, std::u16string& expr){
+    bool Morpher::recurseLexerRule(sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& source, std::vector<std::u16string>& expr){
         depth++;
         bool ret=false;
         bool rangeOn=false;
@@ -117,28 +121,31 @@ namespace sylvanmats::dsl{
             auto& vv=graph::vertex_value(dagGraph, v);
             //std::cout<<"ID to "<<vv.token<<std::endl;
             if(vv.token==sylvanmats::antlr4::parse::ID){
+                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
                 std::u16string expr2(vv.start, vv.stop);
                 if(expr2.compare(u"EOF")==0)expr2=u"EndOfFile";
-                if(prevToken!=sylvanmats::antlr4::parse::COLON && prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr+=u" && ";
-                expr+=expr2+u"(temp)";
-                std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
+                if(prevToken!=sylvanmats::antlr4::parse::COLON && prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
+                else if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr.back()+=u" && ";
+                expr.back()+=expr2+u"(temp)";
+                //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                 //std::cout<<"recurse ID "<<cv.to_bytes(expr2)<<" "<<size(graph::edges(dagGraph, v))<<std::endl;
                 orOn=false;
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LPAREN){
-                if(prevToken!=sylvanmats::antlr4::parse::COLON && prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr+=u" && ";
-                expr+=u"(";
+                if(prevToken!=sylvanmats::antlr4::parse::COLON && prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
+                expr.push_back(std::u16string{});
+                expr.back()+=u"(";
                 orOn=false;
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::RPAREN){
-                expr+=u")";
+                expr.back()+=u")";
                 orOn=false;
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LBRACK){
-                expr+=u"(";
+                expr.back()+=u"(";
                 for (auto&& be : graph::edges(dagGraph, v)){
                     auto& b=dagGraph[graph::target_id(dagGraph, be)];
                     auto& bv=graph::vertex_value(dagGraph, b);
@@ -148,56 +155,60 @@ namespace sylvanmats::dsl{
                         bool esc=false;
                         if((*itC)==u'\\'){itC++;esc=true;}
                         if((*itC)==u'+' && (*std::next(itC))==u'-'){
-                            expr+=u"(*temp)==u'";
-                            expr+=std::u16string(1, (*itC));
-                            expr+=u"' || (*temp)==u'";
+                            expr.back()+=u"(*temp)==u'";
+                            expr.back()+=std::u16string(1, (*itC));
+                            expr.back()+=u"' || (*temp)==u'";
                             itC++;
-                            expr+=std::u16string(1, (*itC));
-                            expr+=u"'";
+                            expr.back()+=std::u16string(1, (*itC));
+                            expr.back()+=u"'";
                         }
-                        else if((*itC)==u'-' && (*std::next(itC))!=u']')expr+=u"&& ";
+                        else if((*itC)==u'-' && (*std::next(itC))!=u']')expr.back()+=u"&& ";
                         else if((*std::next(itC))==u'-'){
-                            expr+=u"(*temp)>=u'";
-                            if(esc || (*itC)==L'\'')expr+=u"\\";
-                            expr+=std::u16string(1, (*itC));
-                            expr+=u"' ";
+                            expr.back()+=u"(*temp)>=u'";
+                            if(esc || (*itC)==L'\'')expr.back()+=u"\\";
+                            expr.back()+=std::u16string(1, (*itC));
+                            expr.back()+=u"' ";
                         }
                         else if((*std::prev(itC))==u'-'){
-                            expr+=u"(*temp)<=u'";
-                            if(esc || (*itC)==u'\'')expr+=u"\\";
-                            expr+=std::u16string(1, (*itC));
-                            expr+=u"' ";
-                            if(std::next(itC)!=expr2.end())expr+=u" || ";
+                            expr.back()+=u"(*temp)<=u'";
+                            if(esc || (*itC)==u'\'')expr.back()+=u"\\";
+                            expr.back()+=std::u16string(1, (*itC));
+                            expr.back()+=u"' ";
+                            if(std::next(itC)!=expr2.end())expr.back()+=u" || ";
                         }
                         else {
-                            expr+=u"(*temp)==u'";
-                            if(esc || (*itC)==u'\'')expr+=(u"\\");
-                            expr+=std::u16string(1, (*itC));
-                            expr+=u"' ";
-                            if(std::next(itC)!=expr2.end())expr+=u" || ";
+                            expr.back()+=u"(*temp)==u'";
+                            if(esc || (*itC)==u'\'')expr.back()+=(u"\\");
+                            expr.back()+=std::u16string(1, (*itC));
+                            expr.back()+=u"' ";
+                            if(std::next(itC)!=expr2.end())expr.back()+=u" || ";
                         }
                     }
                 }
-                expr+=u");temp++";
+                expr.back()+=u");temp++";
             }
             else if(vv.token==sylvanmats::antlr4::parse::PIPE){
-                expr+=u" || ";
+                expr.back()+=u" || ";
+                //expr.push_back(std::u16string{});
                 orOn=true;
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::NOT){
-                expr+=u" !";
+                expr.back()+=u" !";
                 orOn=true;
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::PLUS){
-                expr=u"false;(while"+expr+u")ret=true";
+                expr[expr.size()-2]=u"[&]()->bool{ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";
+                if(expr.size()>=2)expr.pop_back();
             }
             else if(vv.token==sylvanmats::antlr4::parse::STAR){
-                expr=u"false;while("+expr+u")ret=true";
+                expr[expr.size()-2]=u"[&]()->bool{ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";
+                if(expr.size()>=2)expr.pop_back();
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
-                expr=u"[&expr, &temp]() {if("+expr+u"){temp++;return true;}else return false;}";
+                expr[expr.size()-2]=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";
+                if(expr.size()>=2)expr.pop_back();
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){
                 rangeOn=true;
@@ -211,19 +222,19 @@ namespace sylvanmats::dsl{
                 auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
                 std::u16string expr2(vv.start, vv.stop);
-                if(prevToken!=sylvanmats::antlr4::parse::COLON && prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr+=u" && ";
+                if(prevToken!=sylvanmats::antlr4::parse::COLON && prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
                 if(expr2.size()<3){}
                 else if(expr2.size()==3 || (expr2.size()==4 && expr2.at(1)==u'\\') || (expr2.size()==8 && expr2.at(1)==u'\\' && expr2.at(2)==u'u') || (expr2.size()>=9 && expr2.at(1)==u'\\' && expr2.at(2)==u'u' && expr2.at(3)==u'{' && expr2.at(expr2.size()-2)==u'}')){
                     //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                     //std::cout<<"morph SL "<<cv.to_bytes(expr2)<<" "<<(graph::target_id(dagGraph, se)+1)<<" "<<graph::target_id(dagGraph, se)<<" "<<(graph::target_id(dagGraph, se)-1)<<" "<<vp.token<<" "<<vm.token<<" "<<sylvanmats::antlr4::parse::RANGE<<std::endl;
                     if(vp.token==sylvanmats::antlr4::parse::RANGE){
-                       expr+=u"([&temp]() {if((*temp)>=u"+expr2+u"){temp++;return true;}else return false;}";
+                       expr.back()+=u"([&temp]()->bool{if((*temp)>=u"+expr2+u"){temp++;return true;}else return false;}()";
                     }
                     else if(vm.token==sylvanmats::antlr4::parse::RANGE){
-                        expr+=u"[&temp]() {if((*temp)<=u"+expr2+u"){temp++;return true;}else return false;})";
+                        expr.back()+=u"[&temp]()->bool{if((*temp)<=u"+expr2+u"){temp++;return true;}else return false;}())";
                     }
                     else
-                        expr+=u"[&temp]() {if((*temp)==u"+expr2+u"){temp++;return true;}else return false;}";
+                        expr.back()+=u"[&temp]()->bool{if((*temp)==u"+expr2+u"){temp++;return true;}else return false;}()";
                 }
                 else if(expr2.size()>3){
                     std::u16string_view expr2v=expr2.substr(1, expr2.size()-2);
@@ -236,13 +247,13 @@ namespace sylvanmats::dsl{
                     //expr2.at(0)=u'"';
                     //expr2.at(expr2.size()-1)=u'"';
                     if(vp.token==sylvanmats::antlr4::parse::RANGE){
-                        expr+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
+                        expr.back()+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
                     }
                     else if(vm.token==sylvanmats::antlr4::parse::RANGE){
-                        expr+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
+                        expr.back()+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
                     }
                     else
-                        expr+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
+                        expr.back()+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
                 }
                 orOn=false;
                 rangeOn=false;
