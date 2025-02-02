@@ -25,19 +25,18 @@ namespace sylvanmats::dsl{
             auto& nu=graph::vertex_value(dagGraph, v);
             auto& nv=graph::vertex_value(dagGraph, o);
             if(nv.token==sylvanmats::antlr4::parse::FRAGMENT){
-                this->operator()(g4Buffer, dagGraph, o);
+                this->operator()(g4Buffer, dagGraph, o, true);
             }
         }
         this->operator()(g4Buffer, dagGraph, v);
     }
 
-    void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v){
+    void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v, bool frag){
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         std::vector<std::u16string> expr{std::u16string{}};
         std::u16string slabel{};
         std::u16string label{};
         bool block=false;
-        bool frag=false;
         for (auto&& oe : graph::edges(dagGraph, v)) {
             graph::container::csr_row<unsigned int>& o=dagGraph[graph::target_id(dagGraph, oe)];
             /*int status;
@@ -67,6 +66,9 @@ namespace sylvanmats::dsl{
                 codeGenerator.appendToken(cv.to_bytes(label));
                 label.clear();
                 frag=false;
+            }
+            else if(nv.token==sylvanmats::antlr4::parse::FRAGMENT){
+                frag=true;
             }
             else if(nv.token==sylvanmats::antlr4::parse::IMPORT){
                 std::cout<<"token==IMPORT "<<size(graph::edges(dagGraph, o))<<std::endl;
@@ -245,10 +247,9 @@ namespace sylvanmats::dsl{
                 else if(expr2.size()>3){
                     std::u16string_view expr2v=expr2.substr(1, expr2.size()-2);
                     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
-                    std::u16string text{};
-                    for(std::u16string_view::iterator eIt=expr2v.begin();eIt!=expr2v.end();eIt++){
-                        if((*eIt)=='"')text.append(1, u'\\');
-                        text.append(1, (*eIt));
+                    std::u16string text(std::next(expr2.begin()), std::prev(expr2.end()));
+                    while(text.find(u"\"")!=std::u16string::npos){
+                        text.insert(text.find(u"\""), 1, u'\\');
                     }
                     //expr2.at(0)=u'"';
                     //expr2.at(expr2.size()-1)=u'"';
@@ -259,7 +260,7 @@ namespace sylvanmats::dsl{
                         expr.back()+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
                     }
                     else
-                        expr.back()+=u"std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0";
+                        expr.back()+=u"[&temp]()->bool{if(std::u16ncmp(&(*temp), u\""+text+u"\", "+cv.from_bytes(std::to_string(text.size()))+u")==0){std::advance(temp,"+cv.from_bytes(std::to_string(text.size()))+u");return true;}else return false;}()";
                 }
                 orOn=false;
                 rangeOn=false;
