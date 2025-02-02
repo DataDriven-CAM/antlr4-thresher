@@ -245,11 +245,12 @@ namespace sylvanmats::dsl{
                         expr.back()+=u"[&temp]()->bool{if((*temp)==u"+expr2+u"){temp++;return true;}else return false;}()";
                 }
                 else if(expr2.size()>3){
-                    std::u16string_view expr2v=expr2.substr(1, expr2.size()-2);
-                    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
+                            std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                     std::u16string text(std::next(expr2.begin()), std::prev(expr2.end()));
-                    while(text.find(u"\"")!=std::u16string::npos){
+                    size_t offset=text.find(u"\"");
+                    while(offset!=std::u16string::npos){
                         text.insert(text.find(u"\""), 1, u'\\');
+                        offset=text.find(u"\"", offset+2);
                     }
                     //expr2.at(0)=u'"';
                     //expr2.at(expr2.size()-1)=u'"';
