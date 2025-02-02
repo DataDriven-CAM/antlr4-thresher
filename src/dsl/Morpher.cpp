@@ -142,9 +142,15 @@ namespace sylvanmats::dsl{
             else if(vv.token==sylvanmats::antlr4::parse::RPAREN){
                 expr.back()+=u")";
                 orOn=false;
+                auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
+                if(expr.size()>=2 && (vp.token==sylvanmats::antlr4::parse::PLUS && vp.token==sylvanmats::antlr4::parse::STAR && vp.token==sylvanmats::antlr4::parse::QUESTION)){
+                    expr[expr.size()-2]+=expr.back();
+                    expr.pop_back();
+                }
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LBRACK){
+                expr.push_back(std::u16string{});
                 expr.back()+=u"(";
                 for (auto&& be : graph::edges(dagGraph, v)){
                     auto& b=dagGraph[graph::target_id(dagGraph, be)];
@@ -199,15 +205,15 @@ namespace sylvanmats::dsl{
                 if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::PLUS){
-                expr[expr.size()-2]=u"[&]()->bool{ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";
+                expr[expr.size()-2]+=u"[&]()->bool{ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";
                 if(expr.size()>=2)expr.pop_back();
             }
             else if(vv.token==sylvanmats::antlr4::parse::STAR){
-                expr[expr.size()-2]=u"[&]()->bool{ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";
+                expr[expr.size()-2]+=u"[&]()->bool{ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";
                 if(expr.size()>=2)expr.pop_back();
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
-                expr[expr.size()-2]=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";
+                expr[expr.size()-2]+=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";
                 if(expr.size()>=2)expr.pop_back();
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){
