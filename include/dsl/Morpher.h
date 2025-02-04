@@ -15,6 +15,7 @@ namespace sylvanmats::dsl{
     protected:
         sylvanmats::publishing::CodeGenerator<std::string>& codeGenerator;
         std::filesystem::path directory="./";
+        std::u16string lexerInstance{};
     public:
         Morpher() = delete;
         Morpher(std::filesystem::path& directory, sylvanmats::publishing::CodeGenerator<std::string>& codeGenerator);

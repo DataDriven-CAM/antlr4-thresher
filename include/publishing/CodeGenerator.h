@@ -346,6 +346,7 @@ namespace sylvanmats::publishing{
         void setParserClass(T parserClass){this->parserClass=parserClass;};
         T& getParserClass(){return parserClass;};
         void setTokenVocab(T tokenVocab){this->tokenVocab=tokenVocab;};
+        T& getTokenVocab(){return tokenVocab;};
         void appendToken(T t){tokens.push_back(t);};
         void appendLexerRuleClass(T t, T mode, bool frag, T expr){
             lexerRuleClasses.push_back(std::make_tuple(t, expr));

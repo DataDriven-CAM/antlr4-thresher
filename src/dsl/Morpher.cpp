@@ -8,6 +8,11 @@
  
 namespace sylvanmats::dsl{
     Morpher::Morpher(std::filesystem::path& directory, sylvanmats::publishing::CodeGenerator<std::string>& codeGenerator) : directory (directory), codeGenerator (codeGenerator) {
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
+        if(!codeGenerator.getTokenVocab().empty()){
+            lexerInstance=cv.from_bytes(codeGenerator.getTokenVocab())+u".";
+            lexerInstance.at(0)=std::tolower(lexerInstance.at(0));
+        }
     }
 
     void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph){
@@ -128,7 +133,10 @@ namespace sylvanmats::dsl{
                 if(expr2.compare(u"EOF")==0)expr2=u"EndOfFile";
                 if(prevToken!=sylvanmats::antlr4::parse::COLON && prevToken!=sylvanmats::antlr4::parse::PIPE && prevToken!=sylvanmats::antlr4::parse::LPAREN && prevToken!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
                 else if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr.back()+=u" && ";
-                expr.back()+=expr2+u"(temp)";
+                if(!lexerInstance.empty() && std::isupper(expr2.at(0)))
+                    expr.back()+=lexerInstance+expr2+u"(temp)";
+                else
+                    expr.back()+=expr2+u"(temp)";
                 //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                 //std::cout<<"recurse ID "<<cv.to_bytes(expr2)<<" "<<size(graph::edges(dagGraph, v))<<std::endl;
                 orOn=false;
