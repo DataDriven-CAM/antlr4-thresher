@@ -28,22 +28,7 @@ namespace {namespace} {{
 {tokens}
     }};
 
-    enum MODE{{
-        DEFAULT,
-        Options,
-        Tokens,
-        Channels
-    }};
-
-    struct ast_node{{
-      const char16_t* start;
-      const char16_t* stop;
-      TOKEN token;
-      MODE mode=MODE::DEFAULT;
-    }};
-
-
-    using G = graph::container::compressed_graph<int, ast_node>;
+{common}
 
     class {class}{{
     protected:

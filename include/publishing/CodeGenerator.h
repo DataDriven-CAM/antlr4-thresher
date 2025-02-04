@@ -126,7 +126,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto iArg=fmt::arg("indent", indentation);
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&)> {function} = [](std::u16string::const_iterator& it) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&)> {function} = [&](std::u16string::const_iterator& it) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -310,6 +310,24 @@ namespace sylvanmats::publishing{
             auto classArg=fmt::arg("class", parserClass);
             //T ns="code";
             auto nsArg=fmt::arg("namespace", ns);
+            T commonStuff=(tokenVocab.empty())? R"(    enum MODE{
+        DEFAULT,
+        Options,
+        Tokens,
+        Channels
+    };
+
+    struct ast_node{
+      const char16_t* start;
+      const char16_t* stop;
+      TOKEN token;
+      MODE mode=MODE::DEFAULT;
+    };
+
+
+    using G = graph::container::compressed_graph<int, ast_node>;
+)": "";
+            auto cArg=fmt::arg("common", commonStuff);
             T lexerInclude=(!tokenVocab.empty())? "#include \""+tokenVocab+".h\"": "";
             auto tliArg=fmt::arg("token_vocab_include", lexerInclude);
             auto tlcArg=fmt::arg("token_vocab_class", tokenVocab);
@@ -320,7 +338,7 @@ namespace sylvanmats::publishing{
             auto rArg=fmt::arg("lexer_rules", lexerRuleClasses);
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
             auto pArg=fmt::arg("parser_rules", parserRuleClasses);
-              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, rArg, rlArg, pArg));
+              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, cArg, classArg, tlcArg, tliiArg, tArg, rArg, rlArg, pArg));
               return ret;
           };
 
