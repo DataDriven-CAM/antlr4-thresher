@@ -21,6 +21,7 @@ namespace sylvanmats::dsl{
         graph::vertex_id_t<sylvanmats::antlr4::parse::G> vid=static_cast<graph::vertex_id_t<sylvanmats::antlr4::parse::G>>(itDag - begin(graph::vertices(dagGraph)));
         auto& v=dagGraph[vid];
         //std::cout<<"vid "<<vid<<" "<<graph::num_vertices(dagGraph)<<" "<<graph::num_edges(dagGraph)<<std::endl;
+        this->operator()(g4Buffer, dagGraph, v);
         for (auto&& oe : graph::edges(dagGraph, v)) {
             graph::container::csr_row<unsigned int>& o=dagGraph[graph::target_id(dagGraph, oe)];
             /*int status;
@@ -33,7 +34,6 @@ namespace sylvanmats::dsl{
                 this->operator()(g4Buffer, dagGraph, o, true);
             }
         }
-        this->operator()(g4Buffer, dagGraph, v);
     }
 
     void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v, bool frag){
@@ -63,12 +63,13 @@ namespace sylvanmats::dsl{
                 if(expr.back().empty())expr.back()=u"false";
                 std::u16string exprLine{};
                 for(std::u16string& entry : expr)exprLine.append(entry);
+                std::u16string cT=tokenPrefix+label;
+                std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char16_t& c){return std::toupper(c);});
                 if(std::isupper(label.at(0)))
-                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), "", frag, cv.to_bytes(exprLine));
+                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
                 else
-                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", frag, cv.to_bytes(exprLine));
-                std::transform(label.cbegin(), label.cend(), label.begin(), [](const char16_t& c){return std::toupper(c);});
-                codeGenerator.appendToken(cv.to_bytes(label));
+                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
+                codeGenerator.appendToken(cv.to_bytes(cT));
                 label.clear();
                 frag=false;
             }
@@ -99,6 +100,8 @@ namespace sylvanmats::dsl{
             else if(nv.token==sylvanmats::antlr4::parse::LEXER || nv.token==sylvanmats::antlr4::parse::PARSER){
                 //std::u16string lexStr(nv.start, nv.stop);
                 //std::cout<<"token==LEXER/PARSER "<<cv.to_bytes(lexStr)<<" "<<size(graph::edges(dagGraph, o))<<std::endl;
+                if(nv.token==sylvanmats::antlr4::parse::PARSER)tokenPrefix=u"PARSER_";
+                codeGenerator.appendToken(cv.to_bytes(tokenPrefix+u"ROOT"));
                 for (auto&& ge : graph::edges(dagGraph, o)){
                 auto& g=dagGraph[graph::target_id(dagGraph, ge)];
                 auto& gv=graph::vertex_value(dagGraph, g);

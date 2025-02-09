@@ -24,20 +24,6 @@ struct fmt::formatter<std::vector<std::string>>{
     
      auto format(const std::vector<std::string>& v, format_context& ctx) const -> format_context::iterator{
         std::string indentation(8, ' ');
-//        const auto&& buf=ctx.out();
-//        if(curly){
-//            constexpr char* fmt={"{{"};
-//            std::format_to(ctx.out(), fmt);
-//        }
-//        else{
-//            constexpr char* fmt{"["};
-//            std::format_to(ctx.out(), fmt);            
-//        }
- //        if (v.size() > 0){
-//            const std::string_view vf=value_format;
-//            size_t d=v[0];
-//            std::format_to(ctx.out(), vf, d);
-//        }
          //std::cout<<"tokens "<<v.size()<<std::endl;
         for (int i= 0; i < v.size(); ++i){
             //auto iArg=fmt::arg("indent", indentation);
@@ -49,14 +35,6 @@ struct fmt::formatter<std::vector<std::string>>{
         }
         constexpr typename std::string::value_type* fmt={""};
         return fmt::format_to(ctx.out(), fmt);
-//        if(curly){
-//            constexpr char* fmt={"}}"};
-//            return std::format_to(ctx.out(), fmt);
-//        }
-//        else{
-//            constexpr char* fmt={"]"};
-//            return std::format_to(ctx.out(), fmt);
-//        }
     }
     // ...
     bool        curly{false};
@@ -71,20 +49,6 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string>>>{
     
      auto format(const std::vector<std::tuple<std::string, std::string>>& v, format_context& ctx) const -> format_context::iterator{
         std::string indentation(8, ' ');
-//        const auto&& buf=ctx.out();
-//        if(curly){
-//            constexpr char* fmt={"{{"};
-//            std::format_to(ctx.out(), fmt);
-//        }
-//        else{
-//            constexpr char* fmt{"["};
-//            std::format_to(ctx.out(), fmt);            
-//        }
- //        if (v.size() > 0){
-//            const std::string_view vf=value_format;
-//            size_t d=v[0];
-//            std::format_to(ctx.out(), vf, d);
-//        }
          //std::cout<<"tokens "<<v.size()<<std::endl;
         for (int i= 0; i < v.size(); ++i){
             std::string iA=std::get<0>(v[i]);
@@ -96,14 +60,6 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string>>>{
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
-//        if(curly){
-//            constexpr char* fmt={"}}"};
-//            return std::format_to(ctx.out(), fmt);
-//        }
-//        else{
-//            constexpr char* fmt={"]"};
-//            return std::format_to(ctx.out(), fmt);
-//        }
     }
     // ...
     bool        curly{false};
@@ -278,8 +234,8 @@ namespace sylvanmats::publishing{
         T blockComment{};
         T tokenVocab{};
         T grammarTemplate{};
-        T lexerRuleTemplate{};
-        T parserRuleTemplate{};
+        T lexerLadderTemplate{};
+        T parserLadderTemplate{};
         T parserClass{};
         std::vector<T> tokens;
         std::vector<std::tuple<T, T>> lexerRuleClasses;
@@ -296,10 +252,14 @@ namespace sylvanmats::publishing{
             //std::wstring_convert<std::codecvt_utf8_utf16<typename T::value_type>, typename T::value_type> cv;
             std::ifstream file(path);
             grammarTemplate=std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            std::filesystem::path lrpath=templateLocation+"/lexer_rule.txt";
+            std::filesystem::path lrpath=templateLocation+"/lexer_ladder.txt";
     //        std::cout<<" "<<path.string()<<std::endl;
             std::ifstream lrfile(lrpath);
-            lexerRuleTemplate=std::string((std::istreambuf_iterator<char>(lrfile)), std::istreambuf_iterator<char>());
+            lexerLadderTemplate=std::string((std::istreambuf_iterator<char>(lrfile)), std::istreambuf_iterator<char>());
+            std::filesystem::path plpath=templateLocation+"/parser_ladder.txt";
+    //        std::cout<<" "<<path.string()<<std::endl;
+            std::ifstream plfile(plpath);
+            parserLadderTemplate=std::string((std::istreambuf_iterator<char>(plfile)), std::istreambuf_iterator<char>());
         };
         CodeGenerator(const CodeGenerator& orig) = delete;
         virtual ~CodeGenerator() = default;
@@ -335,10 +295,13 @@ namespace sylvanmats::publishing{
             if(!tokenVocabInstance.empty())tokenVocabInstance.at(0)=std::tolower(tokenVocabInstance.at(0));
             auto tliiArg=fmt::arg("token_vocab_instance", tokenVocabInstance);
             auto tArg=fmt::arg("tokens", tokens);
-            auto rArg=fmt::arg("lexer_rules", lexerRuleClasses);
+            auto lrArg=fmt::arg("lexer_rules", lexerRuleClasses);
+            auto prArg=fmt::arg("parser_rules", parserRuleClasses);
+            auto dtArg=fmt::arg("default_token", !tokens.empty() ? tokens[0]: "");
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
-            auto pArg=fmt::arg("parser_rules", parserRuleClasses);
-              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, cArg, classArg, tlcArg, tliiArg, tArg, rArg, rlArg, pArg));
+            T ll=(!tokenVocab.empty())? render(parserLadderTemplate, fmt::make_format_args(tliiArg, rlArg)) : render(lexerLadderTemplate, fmt::make_format_args(dtArg, rlArg));
+            auto llArg=fmt::arg("lexer_ladder", ll);
+              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, cArg, classArg, tlcArg, tliiArg, tArg, lrArg, prArg, llArg));
               return ret;
           };
 
@@ -348,13 +311,11 @@ namespace sylvanmats::publishing{
         void setTokenVocab(T tokenVocab){this->tokenVocab=tokenVocab;};
         T& getTokenVocab(){return tokenVocab;};
         void appendToken(T t){tokens.push_back(t);};
-        void appendLexerRuleClass(T t, T mode, bool frag, T expr){
+        void appendLexerRuleClass(T t, T mode, T token, bool frag, T expr){
             lexerRuleClasses.push_back(std::make_tuple(t, expr));
-            T cT=t;
-            std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            
-            if(!frag)ladderRules.push_back(std::make_tuple(t, mode, cT, true));
+            if(!frag)ladderRules.push_back(std::make_tuple(t, mode, token, true));
         };
-        void appendParserRuleClass(T t, T mode, bool frag, T expr){
+        void appendParserRuleClass(T t, T mode, T token, bool frag, T expr){
             parserRuleClasses.push_back(std::make_tuple(t, mode, expr));
             T cT=t;
             //std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            

@@ -1,0 +1,3 @@
+{token_vocab_instance}(utf16, [](sylvanmats::antlr4::parse::G& dagGraph){{
+{rules_ladder}
+    }});
