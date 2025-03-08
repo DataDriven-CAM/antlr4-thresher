@@ -82,7 +82,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto iArg=fmt::arg("indent", indentation);
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&)> {function} = [&](std::u16string::const_iterator& it) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&, G&)> {function} = [&](std::u16string::const_iterator& it, G& dagGraph) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -233,6 +233,7 @@ namespace sylvanmats::publishing{
         std::string ns;
         T blockComment{};
         T tokenVocab{};
+        T tokenPrefix="LEXER_";
         T grammarTemplate{};
         T lexerLadderTemplate{};
         T parserLadderTemplate{};
@@ -280,7 +281,7 @@ namespace sylvanmats::publishing{
     struct ast_node{
       const char16_t* start;
       const char16_t* stop;
-      TOKEN token;
+      )"+tokenPrefix+R"(TOKEN token;
       MODE mode=MODE::DEFAULT;
     };
 
@@ -291,6 +292,7 @@ namespace sylvanmats::publishing{
             T lexerInclude=(!tokenVocab.empty())? "#include \""+tokenVocab+".h\"": "";
             auto tliArg=fmt::arg("token_vocab_include", lexerInclude);
             auto tlcArg=fmt::arg("token_vocab_class", tokenVocab);
+            auto tpArg=fmt::arg("token_prefix", tokenPrefix);
             T tokenVocabInstance=tokenVocab;
             if(!tokenVocabInstance.empty())tokenVocabInstance.at(0)=std::tolower(tokenVocabInstance.at(0));
             auto tliiArg=fmt::arg("token_vocab_instance", tokenVocabInstance);
@@ -301,7 +303,7 @@ namespace sylvanmats::publishing{
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
             T ll=(!tokenVocab.empty())? render(parserLadderTemplate, fmt::make_format_args(tliiArg, rlArg)) : render(lexerLadderTemplate, fmt::make_format_args(dtArg, rlArg));
             auto llArg=fmt::arg("lexer_ladder", ll);
-              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, cArg, classArg, tlcArg, tliiArg, tArg, lrArg, prArg, llArg));
+              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, cArg, classArg, tlcArg, tpArg, tliiArg, tArg, lrArg, prArg, llArg));
               return ret;
           };
 
@@ -310,6 +312,7 @@ namespace sylvanmats::publishing{
         T& getParserClass(){return parserClass;};
         void setTokenVocab(T tokenVocab){this->tokenVocab=tokenVocab;};
         T& getTokenVocab(){return tokenVocab;};
+        void setTokenPrefix(T tokenPrefix){this->tokenPrefix=tokenPrefix;};
         void appendToken(T t){tokens.push_back(t);};
         void appendLexerRuleClass(T t, T mode, T token, bool frag, T expr){
             lexerRuleClasses.push_back(std::make_tuple(t, expr));

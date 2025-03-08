@@ -23,7 +23,7 @@
 
 namespace {namespace} {{
 
-    enum TOKEN {{
+    enum {token_prefix}TOKEN {{
 {tokens}
     }};
 
