@@ -167,6 +167,7 @@ namespace sylvanmats::dsl{
                 expr.back()+=u")";
                 orOn=false;
                 auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
+                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
                 if(expr.size()>=2 && (vp.token!=sylvanmats::antlr4::parse::PLUS && vp.token!=sylvanmats::antlr4::parse::STAR && vp.token!=sylvanmats::antlr4::parse::QUESTION)){
                     expr[expr.size()-2]+=expr.back();
                     expr.pop_back();

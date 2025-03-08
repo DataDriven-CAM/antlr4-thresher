@@ -481,15 +481,14 @@ namespace sylvanmats::antlr4::parse {
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 if(depth>0)depth--;
             }
-            else if((*it)==u'|'){
-                vertices.push_back({.start=&(*it), .token=PIPE});
-                ++it;
-                vertices.back().stop=&(*it);
+            else if(Pipe(it)){
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=PIPE});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                bool hit=false;
-                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                //bool hit=false;
+                //size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                //if(hit)
+                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
                 //depth++;
             }
             else if(Star(it)){
