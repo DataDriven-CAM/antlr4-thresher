@@ -53,6 +53,10 @@ namespace sylvanmats::antlr4::parse {
     private:
         char16_t Esc=u'\\';
 
+        std::function<bool(std::u16string::const_iterator&)> LParen = [&](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=[&]()->bool{if((*temp)==u'('){temp++;return true;}else return false;}(); if(ret)it=temp;return ret;};
+
+        std::function<bool(std::u16string::const_iterator&)> RParen = [&](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=[&]()->bool{if((*temp)==u')'){temp++;return true;}else return false;}(); if(ret)it=temp;return ret;};
+
         std::function<bool(std::u16string::const_iterator&)> Colon = [](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=(*temp)==u':'; if(ret)it=temp;return ret;};
 
         std::function<bool(std::u16string::const_iterator&)> Question = [](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=(*temp)==u'?';temp++; if(ret)it=temp;return ret;};

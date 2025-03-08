@@ -287,7 +287,15 @@ namespace sylvanmats::publishing{
 
 
     using G = graph::container::compressed_graph<int, ast_node>;
-)": "";
+)": R"(    struct parser_node{
+      )"+tokenPrefix+R"(TOKEN parser_token;
+      LEXER_TOKEN token;
+      MODE mode=MODE::DEFAULT;
+    };
+
+
+    using PG = graph::container::compressed_graph<int, parser_node>;
+)";
             auto cArg=fmt::arg("common", commonStuff);
             T lexerInclude=(!tokenVocab.empty())? "#include \""+tokenVocab+".h\"": "";
             auto tliArg=fmt::arg("token_vocab_include", lexerInclude);

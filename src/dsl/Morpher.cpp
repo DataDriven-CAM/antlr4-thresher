@@ -128,7 +128,6 @@ namespace sylvanmats::dsl{
         depth++;
         bool ret=false;
         bool rangeOn=false;
-        sylvanmats::antlr4::parse::TOKEN prevToken=graph::vertex_value(dagGraph, source).token;
         for (auto&& se : graph::edges(dagGraph, source)){
             auto& v=dagGraph[graph::target_id(dagGraph, se)];
             auto& vv=graph::vertex_value(dagGraph, v);
@@ -153,7 +152,7 @@ namespace sylvanmats::dsl{
                 //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                 //std::cout<<"recurse ID "<<cv.to_bytes(expr2)<<" "<<size(graph::edges(dagGraph, v))<<std::endl;
                 orOn=false;
-                if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
+                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LPAREN){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
@@ -161,7 +160,7 @@ namespace sylvanmats::dsl{
                 expr.push_back(std::u16string{});
                 expr.back()+=u"(";
                 orOn=false;
-                if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
+                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::RPAREN){
                 expr.back()+=u")";
@@ -172,7 +171,7 @@ namespace sylvanmats::dsl{
                     expr[expr.size()-2]+=expr.back();
                     expr.pop_back();
                 }
-                if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
+                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LBRACK){
                 expr.push_back(std::u16string{});
@@ -221,12 +220,12 @@ namespace sylvanmats::dsl{
             else if(vv.token==sylvanmats::antlr4::parse::PIPE){
                 expr.back()+=u" || ";
                 orOn=true;
-                if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
+                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::NOT){
                 expr.back()+=u" !";
                 orOn=true;
-                if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
+                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::PLUS){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
@@ -294,7 +293,7 @@ namespace sylvanmats::dsl{
                 orOn=false;
                 rangeOn=false;
             }
-            prevToken=vv.token;
+            if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
         }
         depth--;
         return ret;

@@ -411,19 +411,15 @@ namespace sylvanmats::antlr4::parse {
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 depth=1;
             }
-            else if((*it)==u'('){
-                vertices.push_back({.start=&(*it), .token=LPAREN});
-                ++it;
-                vertices.back().stop=&(*it);
+            else if(LParen(it)){
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LPAREN});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
                 edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
                 depth++;
             }
-            else if((*it)==u')'){
-                vertices.push_back({.start=&(*it), .token=RPAREN});
-                ++it;
-                vertices.back().stop=&(*it);
+            else if(RParen(it)){
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=RPAREN});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
                 bool hit=false;
@@ -485,10 +481,9 @@ namespace sylvanmats::antlr4::parse {
                 vertices.push_back({.start=&(*temp), .stop=&(*it), .token=PIPE});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                //bool hit=false;
-                //size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                //if(hit)
-                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 //depth++;
             }
             else if(Star(it)){
