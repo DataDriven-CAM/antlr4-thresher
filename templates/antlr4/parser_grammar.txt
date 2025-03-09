@@ -56,6 +56,7 @@ namespace {namespace} {{
 {parser_rules}
 
     void operator()(std::u16string& utf16, std::function<void(PG& dagGraph)> apply){{
+        vertices.push_back({{.token=LEXER_ROOT}});
 {rules_ladder}
         apply(dagGraph);
     }};

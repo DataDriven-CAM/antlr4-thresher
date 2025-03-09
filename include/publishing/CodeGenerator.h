@@ -82,7 +82,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto iArg=fmt::arg("indent", indentation);
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&, G&)> {function} = [&](std::u16string::const_iterator& it, G& dagGraph) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&, LG&)> {function} = [&](std::u16string::const_iterator& it, LG& dagGraph) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -274,7 +274,6 @@ namespace sylvanmats::publishing{
             auto tArg=fmt::arg("tokens", tokens);
             auto lrArg=fmt::arg("lexer_rules", lexerRuleClasses);
             auto prArg=fmt::arg("parser_rules", parserRuleClasses);
-            auto dtArg=fmt::arg("default_token", !tokens.empty() ? tokens[0]: "");
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
               T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, lrArg, prArg, rlArg));
               return ret;
