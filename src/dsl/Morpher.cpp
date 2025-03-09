@@ -152,7 +152,6 @@ namespace sylvanmats::dsl{
                 //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                 //std::cout<<"recurse ID "<<cv.to_bytes(expr2)<<" "<<size(graph::edges(dagGraph, v))<<std::endl;
                 orOn=false;
-                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LPAREN){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
@@ -160,7 +159,6 @@ namespace sylvanmats::dsl{
                 expr.push_back(std::u16string{});
                 expr.back()+=u"(";
                 orOn=false;
-                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::RPAREN){
                 expr.back()+=u")";
@@ -171,7 +169,6 @@ namespace sylvanmats::dsl{
                     expr[expr.size()-2]+=expr.back();
                     expr.pop_back();
                 }
-                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::LBRACK){
                 expr.push_back(std::u16string{});
@@ -220,30 +217,28 @@ namespace sylvanmats::dsl{
             else if(vv.token==sylvanmats::antlr4::parse::PIPE){
                 expr.back()+=u" || ";
                 orOn=true;
-                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::NOT){
                 expr.back()+=u" !";
                 orOn=true;
-                //if(size(graph::edges(dagGraph, v))>0)recurseLexerRule(dagGraph, v, expr);
             }
             else if(vv.token==sylvanmats::antlr4::parse::PLUS){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
                 if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";
-                else expr.back()+=u"){ret=true;}return ret;}()";
-                if(vm.token!=sylvanmats::antlr4::parse::ID && expr.size()>=2)expr.pop_back();
+                else {expr.back()+=u"){ret=true;}return ret;}()";expr[expr.size()-2]+=expr.back();}
+                if(expr.size()>=2){expr.pop_back();}
             }
             else if(vv.token==sylvanmats::antlr4::parse::STAR){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
                 if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";
-                else expr.back()+=u"){ret=true;}return ret;}()";
-                if(vm.token!=sylvanmats::antlr4::parse::ID && expr.size()>=2)expr.pop_back();
+                else {expr.back()+=u"){ret=true;}return ret;}()";expr[expr.size()-2]+=expr.back();}
+                if(expr.size()>=2){expr.pop_back();}
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr[expr.size()-2]+=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";
-                else expr.back()+=u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";
-                if(vm.token==sylvanmats::antlr4::parse::RPAREN && expr.size()>=2)expr.pop_back();
+                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";
+                else {expr.back()+=u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";expr[expr.size()-2]+=expr.back();}
+                if(expr.size()>=2){expr.pop_back();}
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){
                 rangeOn=true;

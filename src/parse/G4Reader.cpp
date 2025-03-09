@@ -126,7 +126,7 @@ namespace sylvanmats::antlr4::parse {
                 bool hit=false;
                 size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
-                if(depth<=1)depth++;
+                //if(depth<=1)depth++;
             }
             else if(std::u16ncmp(&(*it), u"options", 7)==0){
                 vertices.push_back({.start=&(*it), .token=OPTIONS, .mode=Options});
@@ -415,7 +415,9 @@ namespace sylvanmats::antlr4::parse {
                 vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LPAREN});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 depth++;
             }
             else if(RParen(it)){
@@ -425,7 +427,7 @@ namespace sylvanmats::antlr4::parse {
                 bool hit=false;
                 size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
-                if(depth>0)depth--;
+                //if(depth>0)depth--;
                 //depth++;
             }
             else if((*it)==u'['){
@@ -434,7 +436,9 @@ namespace sylvanmats::antlr4::parse {
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 depth++;
                 temp=it;
                 while(it!=utf16.end() && (*it)!=u']'){
@@ -448,8 +452,8 @@ namespace sylvanmats::antlr4::parse {
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                bool hit=false;
-                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                hit=false;
+                parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 if(depth>0)depth--;
                 //depth++;
@@ -460,7 +464,9 @@ namespace sylvanmats::antlr4::parse {
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
+                bool hit=false;
+                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 depth++;
                 while(it!=utf16.end() && (*it)!=u'}'){
                     it++;
@@ -472,8 +478,8 @@ namespace sylvanmats::antlr4::parse {
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                bool hit=false;
-                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                hit=false;
+                parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 if(depth>0)depth--;
             }
@@ -484,6 +490,7 @@ namespace sylvanmats::antlr4::parse {
                 bool hit=false;
                 size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                else std::cout<<"Pipe no parent "<<parentIndex<<std::endl;
                 //depth++;
             }
             else if(Star(it)){
@@ -572,9 +579,10 @@ namespace sylvanmats::antlr4::parse {
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                bool hit=false;
-                size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                //bool hit=false;
+                //size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                //if(hit)
+                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
                 depth++;
             }
             else if([&]()->bool{
@@ -589,7 +597,7 @@ namespace sylvanmats::antlr4::parse {
                     //        std::cout<<"ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                     depthProfile[depth].push_back(vertices.size()-1);
-                    if(depth==0)edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
+                    if(depth==0){edges.push_back(std::make_tuple(0, vertices.size()-1, 1));depth++;}
                     else{
                         bool hit=false;
                         size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
