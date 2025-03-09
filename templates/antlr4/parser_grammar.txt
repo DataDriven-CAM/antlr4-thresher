@@ -23,17 +23,24 @@
 
 namespace {namespace} {{
 
-    enum {token_prefix}TOKEN {{
+    enum PARSER_TOKEN {{
 {tokens}
     }};
 
-{common}
+    struct parser_node{{
+      PARSER_TOKEN parser_token;
+      LEXER_TOKEN token;
+      MODE mode=MODE::DEFAULT;
+    }};
+
+
+    using PG = graph::container::compressed_graph<int, parser_node>;
 
     class {class}{{
     protected:
-        G dagGraph;
+        PG dagGraph;
         std::vector<ast_node> vertices;
-        std::vector<std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>> edges;
+        std::vector<std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>> edges;
         
         {token_vocab_class} {token_vocab_instance};
     
@@ -48,8 +55,9 @@ namespace {namespace} {{
         //parser rules
 {parser_rules}
 
-    void operator()(std::u16string& utf16, std::function<void(G& dagGraph)> apply){{
-    {lexer_ladder}
+    void operator()(std::u16string& utf16, std::function<void(PG& dagGraph)> apply){{
+{rules_ladder}
+        apply(dagGraph);
     }};
 
     

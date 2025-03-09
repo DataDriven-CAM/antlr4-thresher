@@ -234,9 +234,8 @@ namespace sylvanmats::publishing{
         T blockComment{};
         T tokenVocab{};
         T tokenPrefix="LEXER_";
-        T grammarTemplate{};
-        T lexerLadderTemplate{};
-        T parserLadderTemplate{};
+        T lexerGrammarTemplate{};
+        T parserGrammarTemplate{};
         T parserClass{};
         std::vector<T> tokens;
         std::vector<std::tuple<T, T>> lexerRuleClasses;
@@ -248,19 +247,14 @@ namespace sylvanmats::publishing{
         CodeGenerator() = delete;
         CodeGenerator(std::string& ns) : ns (ns){
             std::string templateLocation=(getenv("ANTLR4_DB_LOCATION")!=NULL) ? std::string(getenv("ANTLR4_DB_LOCATION"))+"/../templates/antlr4": "../templates/antlr4";
-            std::filesystem::path path=templateLocation+"/grammar.txt";
+            std::filesystem::path path=templateLocation+"/lexer_grammar.txt";
     //        std::cout<<" "<<path.string()<<std::endl;
             //std::wstring_convert<std::codecvt_utf8_utf16<typename T::value_type>, typename T::value_type> cv;
             std::ifstream file(path);
-            grammarTemplate=std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            std::filesystem::path lrpath=templateLocation+"/lexer_ladder.txt";
-    //        std::cout<<" "<<path.string()<<std::endl;
-            std::ifstream lrfile(lrpath);
-            lexerLadderTemplate=std::string((std::istreambuf_iterator<char>(lrfile)), std::istreambuf_iterator<char>());
-            std::filesystem::path plpath=templateLocation+"/parser_ladder.txt";
-    //        std::cout<<" "<<path.string()<<std::endl;
-            std::ifstream plfile(plpath);
-            parserLadderTemplate=std::string((std::istreambuf_iterator<char>(plfile)), std::istreambuf_iterator<char>());
+            lexerGrammarTemplate=std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            std::filesystem::path ppath=templateLocation+"/parser_grammar.txt";
+            std::ifstream pfile(ppath);
+            parserGrammarTemplate=std::string((std::istreambuf_iterator<char>(pfile)), std::istreambuf_iterator<char>());
         };
         CodeGenerator(const CodeGenerator& orig) = delete;
         virtual ~CodeGenerator() = default;
@@ -271,36 +265,9 @@ namespace sylvanmats::publishing{
             auto classArg=fmt::arg("class", parserClass);
             //T ns="code";
             auto nsArg=fmt::arg("namespace", ns);
-            T commonStuff=(tokenVocab.empty())? R"(    enum MODE{
-        DEFAULT,
-        Options,
-        Tokens,
-        Channels
-    };
-
-    struct ast_node{
-      const char16_t* start;
-      const char16_t* stop;
-      )"+tokenPrefix+R"(TOKEN token;
-      MODE mode=MODE::DEFAULT;
-    };
-
-
-    using G = graph::container::compressed_graph<int, ast_node>;
-)": R"(    struct parser_node{
-      )"+tokenPrefix+R"(TOKEN parser_token;
-      LEXER_TOKEN token;
-      MODE mode=MODE::DEFAULT;
-    };
-
-
-    using PG = graph::container::compressed_graph<int, parser_node>;
-)";
-            auto cArg=fmt::arg("common", commonStuff);
             T lexerInclude=(!tokenVocab.empty())? "#include \""+tokenVocab+".h\"": "";
             auto tliArg=fmt::arg("token_vocab_include", lexerInclude);
             auto tlcArg=fmt::arg("token_vocab_class", tokenVocab);
-            auto tpArg=fmt::arg("token_prefix", tokenPrefix);
             T tokenVocabInstance=tokenVocab;
             if(!tokenVocabInstance.empty())tokenVocabInstance.at(0)=std::tolower(tokenVocabInstance.at(0));
             auto tliiArg=fmt::arg("token_vocab_instance", tokenVocabInstance);
@@ -309,9 +276,7 @@ namespace sylvanmats::publishing{
             auto prArg=fmt::arg("parser_rules", parserRuleClasses);
             auto dtArg=fmt::arg("default_token", !tokens.empty() ? tokens[0]: "");
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
-            T ll=(!tokenVocab.empty())? render(parserLadderTemplate, fmt::make_format_args(tliiArg, rlArg)) : render(lexerLadderTemplate, fmt::make_format_args(dtArg, rlArg));
-            auto llArg=fmt::arg("lexer_ladder", ll);
-              T ret=render(grammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, cArg, classArg, tlcArg, tpArg, tliiArg, tArg, lrArg, prArg, llArg));
+              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, lrArg, prArg, rlArg));
               return ret;
           };
 
