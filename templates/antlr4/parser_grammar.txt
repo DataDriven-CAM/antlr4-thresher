@@ -30,6 +30,7 @@ namespace {namespace} {{
     struct parser_node{{
       PARSER_TOKEN parser_token;
       LEXER_TOKEN token;
+      size_t id;
       MODE mode=MODE::DEFAULT;
     }};
 
@@ -57,8 +58,12 @@ namespace {namespace} {{
 
     void operator()(std::u16string& utf16, std::function<void(PG& dagGraph)> apply){{
         vertices.push_back({{.token=LEXER_ROOT}});
+        {token_vocab_instance}(utf16, [&](sylvanmats::antlr4::parse::LG& ldagGraph){{
+        std::u16string::const_iterator it = utf16.begin();
+        std::cout<<"tex "<<tex(it, ldagGraph, dagGraph)<<std::endl;
 {rules_ladder}
-        apply(dagGraph);
+        apply(this->dagGraph);
+        }});
     }};
 
     

@@ -146,7 +146,7 @@ namespace sylvanmats::dsl{
                     if(std::isupper(expr2.at(0)))
                         expr.back()+=lexerInstance+expr2+u"(temp)";
                     else
-                        expr.back()+=expr2+u"(temp, dagGraph)";
+                        expr.back()+=expr2+u"(temp, ldagGraph, pdagGraph)";
                 else
                     expr.back()+=expr2+u"(temp)";
                 //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;

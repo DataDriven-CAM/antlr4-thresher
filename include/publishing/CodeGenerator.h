@@ -82,7 +82,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto iArg=fmt::arg("indent", indentation);
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&, LG&)> {function} = [&](std::u16string::const_iterator& it, LG& dagGraph) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&, LG&, PG&)> {function} = [&](std::u16string::const_iterator& it, LG& ldagGraph, PG& pdagGraph) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -295,7 +295,7 @@ namespace sylvanmats::publishing{
             T cT=t;
             //std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            
             //if(!frag)ladderRules.push_back(std::make_tuple(t, mode, cT, true));
-        };
+        };  
         protected:
 
         T render(fmt::basic_string_view<typename T::value_type> users_fmt, fmt::format_args&& args){
