@@ -82,7 +82,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto iArg=fmt::arg("indent", indentation);
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&, LG&, PG&)> {function} = [&](std::u16string::const_iterator& it, LG& ldagGraph, PG& pdagGraph) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&, LG&, graph::container::csr_row<unsigned int>&)> {function} = [&](std::u16string::const_iterator& it, LG& ldagGraph, graph::container::csr_row<unsigned int>& source) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret){{it=temp;vertices.push_back({{.token=graph::vertex_value(ldagGraph, source).token, .id=source.index}});}}return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);

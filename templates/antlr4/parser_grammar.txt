@@ -40,7 +40,7 @@ namespace {namespace} {{
     class {class}{{
     protected:
         PG dagGraph;
-        std::vector<ast_node> vertices;
+        std::vector<parser_node> vertices;
         std::vector<std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>> edges;
         
         {token_vocab_class} {token_vocab_instance};
@@ -57,11 +57,30 @@ namespace {namespace} {{
 {parser_rules}
 
     void operator()(std::u16string& utf16, std::function<void(PG& dagGraph)> apply){{
-        vertices.push_back({{.token=LEXER_ROOT}});
+        vertices.push_back({{.parser_token=PARSER_ROOT, .token=LEXER_ROOT, .id=0}});
         {token_vocab_instance}(utf16, [&](sylvanmats::antlr4::parse::LG& ldagGraph){{
         std::u16string::const_iterator it = utf16.begin();
-        std::cout<<"tex "<<tex(it, ldagGraph, dagGraph)<<std::endl;
+        auto& source=ldagGraph[0];
+        for (auto&& oe : graph::edges(ldagGraph, source)){{
+            graph::container::csr_row<unsigned int>& o=ldagGraph[graph::target_id(ldagGraph, oe)];
+            std::cout<<"tex "<<tex(it, ldagGraph, o)<<std::endl;
+        }}
 {rules_ladder}
+            std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& a, std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& b){{return std::get<0>(a)<std::get<0>(b) || std::get<1>(a)<std::get<1>(b);}});
+            using value = std::ranges::range_value_t<decltype(edges)>;
+            graph::vertex_id_t<PG> N = static_cast<graph::vertex_id_t<PG>>(size(graph::vertices(this->dagGraph)));
+            using edge_desc  = graph::edge_info<graph::vertex_id_t<PG>, true, void, int>;
+            this->dagGraph.reserve_vertices(vertices.size());
+            this->dagGraph.reserve_edges(edges.size());
+            this->dagGraph.load_edges(edges, [](const value& val) -> edge_desc {{
+//                    std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
+                return edge_desc{{std::get<0>(val), std::get<1>(val), std::get<2>(val)}};
+              }}, N);
+            this->dagGraph.load_vertices(vertices, [&](parser_node& nm) {{
+                auto uid = static_cast<graph::vertex_id_t<PG>>(&nm - vertices.data());
+//                std::cout<<"vertex "<<uid<<std::endl;
+                return graph::copyable_vertex_t<graph::vertex_id_t<PG>, parser_node>{{uid, nm}};
+              }});
         apply(this->dagGraph);
         }});
     }};

@@ -143,10 +143,12 @@ namespace sylvanmats::dsl{
                 else if(vp.token==sylvanmats::antlr4::parse::STAR)expr.back()+=u"[&]()->bool{ret=true;while(";
                 else if(vp.token==sylvanmats::antlr4::parse::QUESTION)expr.back()+=u"[&]()->bool{";
                 if(!lexerInstance.empty())
-                    if(std::isupper(expr2.at(0)))
-                        expr.back()+=lexerInstance+expr2+u"(temp)";
+                    if(std::isupper(expr2.at(0))){
+                        std::transform(expr2.cbegin(), expr2.cend(), expr2.begin(), [](const char16_t& c){return std::toupper(c);});
+                        expr.back()+=u"[&]()->bool{graph::vertex_value(ldagGraph, source).token==LEXER_"+expr2+u"? ret=true : ret=false; if(ret){source=ldagGraph[source.index+1];return true;}else{ return false;}}()";
+                        }
                     else
-                        expr.back()+=expr2+u"(temp, ldagGraph, pdagGraph)";
+                        expr.back()+=expr2+u"(temp, ldagGraph, source)";
                 else
                     expr.back()+=expr2+u"(temp)";
                 //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
