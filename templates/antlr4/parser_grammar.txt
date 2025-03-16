@@ -56,7 +56,7 @@ namespace {namespace} {{
         //parser rules
 {parser_rules}
 
-    void operator()(std::u16string& utf16, std::function<void(PG& dagGraph)> apply){{
+    void operator()(std::u16string& utf16, std::function<void(LG& ldagGraph, PG& dagGraph)> apply){{
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         vertices.push_back({{.parser_token=PARSER_ROOT, .token=LEXER_ROOT, .id=0}});
         {token_vocab_instance}(utf16, [&](sylvanmats::antlr4::parse::LG& ldagGraph){{
@@ -91,7 +91,7 @@ int     status;
 //                std::cout<<"vertex "<<uid<<std::endl;
                 return graph::copyable_vertex_t<graph::vertex_id_t<PG>, parser_node>{{uid, nm}};
               }});
-        apply(this->dagGraph);
+        apply(ldagGraph, this->dagGraph);
         }});
     }};
 
