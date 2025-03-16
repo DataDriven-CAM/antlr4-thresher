@@ -12,6 +12,7 @@ namespace sylvanmats::dsl{
         if(!codeGenerator.getTokenVocab().empty()){
             lexerInstance=cv.from_bytes(codeGenerator.getTokenVocab())+u".";
             lexerInstance.at(0)=std::tolower(lexerInstance.at(0));
+            tempInc=u"if(s.index+1<size(graph::vertices(ldagGraph)))s=ldagGraph[s.index+1]";
         }
     }
 
@@ -145,10 +146,10 @@ namespace sylvanmats::dsl{
                 if(!lexerInstance.empty())
                     if(std::isupper(expr2.at(0))){
                         std::transform(expr2.cbegin(), expr2.cend(), expr2.begin(), [](const char16_t& c){return std::toupper(c);});
-                        expr.back()+=u"[&]()->bool{graph::vertex_value(ldagGraph, source).token==LEXER_"+expr2+u"? ret=true : ret=false; if(ret){source=ldagGraph[source.index+1];return true;}else{ return false;}}()";
+                        expr.back()+=u"[&]()->bool{graph::vertex_value(ldagGraph, ldagGraph[s.index]).token==LEXER_"+expr2+u"? ret=true : ret=false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";
                         }
                     else
-                        expr.back()+=expr2+u"(temp, ldagGraph, source)";
+                        expr.back()+=expr2+u"(ldagGraph, s)";
                 else
                     expr.back()+=expr2+u"(temp)";
                 //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
@@ -238,8 +239,8 @@ namespace sylvanmats::dsl{
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";
-                else {expr.back()+=u"? ret=true : ret=false; if(ret){temp++;return true;}else{ return false;}}()";expr[expr.size()-2]+=expr.back();}
+                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";
+                else {expr.back()+=u"? ret=true : ret=false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";expr[expr.size()-2]+=expr.back();}
                 if(expr.size()>=2){expr.pop_back();}
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){
@@ -260,7 +261,7 @@ namespace sylvanmats::dsl{
                     //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                     //std::cout<<"morph SL "<<cv.to_bytes(expr2)<<" "<<(graph::target_id(dagGraph, se)+1)<<" "<<graph::target_id(dagGraph, se)<<" "<<(graph::target_id(dagGraph, se)-1)<<" "<<vp.token<<" "<<vm.token<<" "<<sylvanmats::antlr4::parse::RANGE<<std::endl;
                     if(vp.token==sylvanmats::antlr4::parse::RANGE){
-                       expr.back()+=u"([&]()->bool{if((*temp)>=u"+expr2+u"){temp++;return true;}else return false;}()";
+                       expr.back()+=u"([&]()->bool{if((*temp)>=u"+expr2+u"){return true;}else return false;}()";
                     }
                     else if(vm.token==sylvanmats::antlr4::parse::RANGE){
                         expr.back()+=u"[&]()->bool{if((*temp)<=u"+expr2+u"){temp++;return true;}else return false;}())";

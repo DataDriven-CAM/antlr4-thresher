@@ -14,7 +14,6 @@
 #define FMT_HEADER_ONLYS
 #include "graph/container/compressed_graph.hpp"
 
-#define protected public
 #include "parse/G4Reader.h"
 #include "dsl/Morpher.h"
 

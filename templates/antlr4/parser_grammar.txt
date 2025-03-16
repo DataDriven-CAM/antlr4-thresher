@@ -15,6 +15,8 @@
 #include <cstring>
 #include <cwchar>
 #include <functional>
+#include <typeinfo>
+#include <cxxabi.h>
 
 #include "parse/u16ncmp.h"
 
@@ -57,15 +59,27 @@ namespace {namespace} {{
 {parser_rules}
 
     void operator()(std::u16string& utf16, std::function<void(PG& dagGraph)> apply){{
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         vertices.push_back({{.parser_token=PARSER_ROOT, .token=LEXER_ROOT, .id=0}});
         {token_vocab_instance}(utf16, [&](sylvanmats::antlr4::parse::LG& ldagGraph){{
+int     status;
+        std::cout<<"ldagGraph "<<graph::num_vertices(ldagGraph)<<" "<<graph::num_edges(ldagGraph)<<std::endl;
         std::u16string::const_iterator it = utf16.begin();
         auto& source=ldagGraph[0];
+            std::cout<<"tid "<<abi::__cxa_demangle(typeid(ldagGraph[0]).name(), NULL, NULL, &status)<<std::endl;
         for (auto&& oe : graph::edges(ldagGraph, source)){{
+            std::cout<<"tid "<<abi::__cxa_demangle(typeid(ldagGraph[graph::target_id(ldagGraph, oe)]).name(), NULL, NULL, &status)<<std::endl;
             graph::container::csr_row<unsigned int>& o=ldagGraph[graph::target_id(ldagGraph, oe)];
-            std::cout<<"tex "<<tex(it, ldagGraph, o)<<std::endl;
+            std::cout<<tex(ldagGraph, o)<<std::endl;
         }}
 {rules_ladder}
+        std::cout<<"vertices "<<vertices.size()<<" "<<edges.size()<<std::endl;
+        for(std::vector<parser_node>::iterator it=vertices.begin();it!=vertices.end();it++){{
+            auto& nv=graph::vertex_value(ldagGraph, ldagGraph[(*it).id]);
+            std::u16string label{{}};
+            label.assign(nv.start, nv.stop);
+            std::cout<<" "<<(*it).parser_token<<" "<<(*it).token<<" "<<(*it).id<<" "<<(cv.to_bytes(label))<<std::endl;
+        }}
             std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& a, std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& b){{return std::get<0>(a)<std::get<0>(b) || std::get<1>(a)<std::get<1>(b);}});
             using value = std::ranges::range_value_t<decltype(edges)>;
             graph::vertex_id_t<PG> N = static_cast<graph::vertex_id_t<PG>>(size(graph::vertices(this->dagGraph)));
