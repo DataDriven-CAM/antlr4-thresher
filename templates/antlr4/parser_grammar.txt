@@ -15,8 +15,6 @@
 #include <cstring>
 #include <cwchar>
 #include <functional>
-#include <typeinfo>
-#include <cxxabi.h>
 
 #include "parse/u16ncmp.h"
 
@@ -66,9 +64,7 @@ int     status;
         std::cout<<"ldagGraph "<<graph::num_vertices(ldagGraph)<<" "<<graph::num_edges(ldagGraph)<<std::endl;
         std::u16string::const_iterator it = utf16.begin();
         auto& source=ldagGraph[0];
-            std::cout<<"tid "<<abi::__cxa_demangle(typeid(ldagGraph[0]).name(), NULL, NULL, &status)<<std::endl;
         for (auto&& oe : graph::edges(ldagGraph, source)){{
-            std::cout<<"tid "<<abi::__cxa_demangle(typeid(ldagGraph[graph::target_id(ldagGraph, oe)]).name(), NULL, NULL, &status)<<std::endl;
             graph::container::csr_row<unsigned int>& o=ldagGraph[graph::target_id(ldagGraph, oe)];
             std::cout<<tex(ldagGraph, o)<<std::endl;
         }}

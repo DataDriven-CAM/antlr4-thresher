@@ -85,7 +85,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
             auto psArg=fmt::arg("parser_token", ps);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, graph::container::csr_row<unsigned int>&)> {function} = [&](LG& ldagGraph, graph::container::csr_row<unsigned int>& source) {{\n{indent}    graph::container::csr_row<unsigned int> s=source;std::cout<<\"{function} \"<<source.index<<\" \"<<(graph::vertex_value(ldagGraph, ldagGraph[source.index]).token)<<std::endl; bool ret={expression}; if(ret){{source=s;vertices.push_back({{.parser_token=PARSER_{parser_token}, .token=graph::vertex_value(ldagGraph, ldagGraph[source.index]).token, .id=source.index}});}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, graph::container::csr_row<unsigned int>&)> {function} = [&](LG& ldagGraph, graph::container::csr_row<unsigned int>& source) {{\n{indent}    graph::container::csr_row<unsigned int> s=source;std::cout<<\"{function} \"<<source.index<<\" \"<<(graph::vertex_value(ldagGraph, ldagGraph[source.index]).token)<<std::endl; bool ret={expression}; if(ret){{source=s;vertices.push_back({{.parser_token=PARSER_{parser_token}, .token=graph::vertex_value(ldagGraph, ldagGraph[source.index]).token, .id=source.index}});if(vertices.size()>1)edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);

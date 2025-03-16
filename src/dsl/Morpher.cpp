@@ -140,13 +140,13 @@ namespace sylvanmats::dsl{
                 if(expr2.compare(u"EOF")==0)expr2=u"EndOfFile";
                 if(vm.token!=sylvanmats::antlr4::parse::COLON && vm.token!=sylvanmats::antlr4::parse::PIPE && vm.token!=sylvanmats::antlr4::parse::LPAREN && vm.token!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
                 else if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr.back()+=u" && ";
-                if(vp.token==sylvanmats::antlr4::parse::PLUS)expr.back()+=u"[&]()->bool{ret=false;while(";
-                else if(vp.token==sylvanmats::antlr4::parse::STAR)expr.back()+=u"[&]()->bool{ret=true;while(";
-                else if(vp.token==sylvanmats::antlr4::parse::QUESTION)expr.back()+=u"[&]()->bool{";
+                if(vp.token==sylvanmats::antlr4::parse::PLUS)expr.back()+=u"[&]()->bool{bool ret=false;while(";
+                else if(vp.token==sylvanmats::antlr4::parse::STAR)expr.back()+=u"[&]()->bool{bool ret=true;while(";
+                else if(vp.token==sylvanmats::antlr4::parse::QUESTION)expr.back()+=u"[&]()->bool{bool ret=";
                 if(!lexerInstance.empty())
                     if(std::isupper(expr2.at(0))){
                         std::transform(expr2.cbegin(), expr2.cend(), expr2.begin(), [](const char16_t& c){return std::toupper(c);});
-                        expr.back()+=u"[&]()->bool{graph::vertex_value(ldagGraph, ldagGraph[s.index]).token==LEXER_"+expr2+u"? ret=true : ret=false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";
+                        expr.back()+=u"[&]()->bool{bool ret=graph::vertex_value(ldagGraph, ldagGraph[s.index]).token==LEXER_"+expr2+u"? true : false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";
                         }
                     else
                         expr.back()+=expr2+u"(ldagGraph, s)";
@@ -227,20 +227,20 @@ namespace sylvanmats::dsl{
             }
             else if(vv.token==sylvanmats::antlr4::parse::PLUS){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";
+                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";
                 else {expr.back()+=u"){ret=true;}return ret;}()";expr[expr.size()-2]+=expr.back();}
                 if(expr.size()>=2){expr.pop_back();}
             }
             else if(vv.token==sylvanmats::antlr4::parse::STAR){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";
+                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{bool ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";
                 else {expr.back()+=u"){ret=true;}return ret;}()";expr[expr.size()-2]+=expr.back();}
                 if(expr.size()>=2){expr.pop_back();}
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{"+expr.back()+u"? ret=true : ret=false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";
-                else {expr.back()+=u"? ret=true : ret=false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";expr[expr.size()-2]+=expr.back();}
+                if(vm.token!=sylvanmats::antlr4::parse::ID)expr[expr.size()-2]+=u"[&]()->bool{bool ret="+expr.back()+u"? true : false; if(ret){return true;}else{ return true;}}()";
+                else {expr.back()+=u"? true : false; if(ret){return true;}else{ return true;}}()";expr[expr.size()-2]+=expr.back();}
                 if(expr.size()>=2){expr.pop_back();}
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){

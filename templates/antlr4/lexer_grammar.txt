@@ -64,7 +64,6 @@ namespace {namespace} {{
 {parser_rules}
 
     void operator()(std::u16string& utf16, std::function<void(LG& dagGraph)> apply){{
-        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         std::u16string::const_iterator it = utf16.begin();
         int count=0;
         int depth=0;
@@ -87,11 +86,6 @@ namespace {namespace} {{
 //                std::cout<<"vertex "<<uid<<std::endl;
                 return graph::copyable_vertex_t<graph::vertex_id_t<LG>, ast_node>{{uid, nm}};
               }});
-        for(std::vector<ast_node>::iterator it=vertices.begin();it!=vertices.end();it++){{
-            std::u16string label{{}};
-            label.assign((*it).start, (*it).stop);
-            std::cout<<"LG "<<(*it).token<<" "<<(cv.to_bytes(label))<<std::endl;
-        }}
             apply(dagGraph);
     }};
 
