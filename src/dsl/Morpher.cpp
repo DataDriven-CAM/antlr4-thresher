@@ -257,7 +257,23 @@ namespace sylvanmats::dsl{
                 std::u16string expr2(vv.start, vv.stop);
                 if(vm.token!=sylvanmats::antlr4::parse::COLON && vm.token!=sylvanmats::antlr4::parse::PIPE && vm.token!=sylvanmats::antlr4::parse::LPAREN && vm.token!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
                 if(expr2.size()<3){}
-                else if(expr2.size()==3 || (expr2.size()==4 && expr2.at(1)==u'\\') || (expr2.size()==8 && expr2.at(1)==u'\\' && expr2.at(2)==u'u') || (expr2.size()>=9 && expr2.at(1)==u'\\' && expr2.at(2)==u'u' && expr2.at(3)==u'{' && expr2.at(expr2.size()-2)==u'}')){
+                else if(expr2.size()>=9 && expr2.at(1)==u'\\' && expr2.at(2)==u'u' && expr2.at(3)==u'{' && expr2.at(expr2.size()-2)==u'}'){
+                    std::u16string digitCode=expr2.substr(4, expr2.size()-6);
+                    std::u16string lowerDigitCode=digitCode.substr(digitCode.size()-4);
+                    std::u16string upperDigitCode=digitCode.substr(0, digitCode.size()-4);
+                    if(upperDigitCode.size()<4)upperDigitCode=std::u16string(4-upperDigitCode.size(), u'0')+upperDigitCode;
+                    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
+                    std::cout<<"morph SL "<<cv.to_bytes(digitCode)<<" "<<cv.to_bytes(lowerDigitCode)<<" upperDigitCode:"<<cv.to_bytes(upperDigitCode)<<std::endl;
+                    if(vp.token==sylvanmats::antlr4::parse::RANGE){
+                       expr.back()+=u"([&]()->bool{if((*temp)>'\\u"+upperDigitCode+u"' || ((*temp)=='\\u"+upperDigitCode+u"' && (*(temp+1))>='\\u"+lowerDigitCode+u"')){return true;}else return false;}()";
+                    }
+                    else if(vm.token==sylvanmats::antlr4::parse::RANGE){
+                        expr.back()+=u"[&]()->bool{if((*temp)<'\\u"+upperDigitCode+u"' || ((*temp)=='\\u"+upperDigitCode+u"' && (*(temp+1))<='\\u"+lowerDigitCode+u"')){temp+=2;return true;}else return false;}())";
+                    }
+                    else
+                        expr.back()+=u"[&]()->bool{if((*temp)=='\\u"+upperDigitCode+u"' && (*(temp+1))=='\\u"+lowerDigitCode+u"'){temp+=2;return true;}else return false;}()";
+                }
+                else if(expr2.size()==3 || (expr2.size()==4 && expr2.at(1)==u'\\') || (expr2.size()==8 && expr2.at(1)==u'\\' && expr2.at(2)==u'u')){
                     //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                     //std::cout<<"morph SL "<<cv.to_bytes(expr2)<<" "<<(graph::target_id(dagGraph, se)+1)<<" "<<graph::target_id(dagGraph, se)<<" "<<(graph::target_id(dagGraph, se)-1)<<" "<<vp.token<<" "<<vm.token<<" "<<sylvanmats::antlr4::parse::RANGE<<std::endl;
                     if(vp.token==sylvanmats::antlr4::parse::RANGE){

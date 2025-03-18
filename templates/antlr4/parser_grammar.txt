@@ -66,7 +66,7 @@ int     status;
         auto& source=ldagGraph[0];
         for (auto&& oe : graph::edges(ldagGraph, source)){{
             graph::container::csr_row<unsigned int>& o=ldagGraph[graph::target_id(ldagGraph, oe)];
-            std::cout<<tex(ldagGraph, o)<<std::endl;
+            std::cout<<{primary_parser_rule}(ldagGraph, o)<<std::endl;
         }}
 {rules_ladder}
         std::cout<<"vertices "<<vertices.size()<<" "<<edges.size()<<std::endl;

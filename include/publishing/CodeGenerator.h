@@ -244,7 +244,7 @@ namespace sylvanmats::publishing{
         std::vector<std::tuple<T, T>> lexerRuleClasses;
          std::vector<std::tuple<std::string, std::string, std::string, bool>> ladderRules;
         std::vector<std::tuple<T, T, T>> parserRuleClasses;
-        //std::vector<std::tupe<std::string, std::args>> rules;
+        T primaryParserRule{};;
 
         public:
         CodeGenerator() = delete;
@@ -278,7 +278,8 @@ namespace sylvanmats::publishing{
             auto lrArg=fmt::arg("lexer_rules", lexerRuleClasses);
             auto prArg=fmt::arg("parser_rules", parserRuleClasses);
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
-              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, lrArg, prArg, rlArg));
+            auto pprArg=fmt::arg("primary_parser_rule", primaryParserRule);
+              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, lrArg, prArg, rlArg, pprArg));
               return ret;
           };
 
@@ -294,6 +295,7 @@ namespace sylvanmats::publishing{
             if(!frag)ladderRules.push_back(std::make_tuple(t, mode, token, true));
         };
         void appendParserRuleClass(T t, T mode, T token, bool frag, T expr){
+            if(primaryParserRule.empty())primaryParserRule=t;
             parserRuleClasses.push_back(std::make_tuple(t, mode, expr));
             T cT=t;
             //std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            
