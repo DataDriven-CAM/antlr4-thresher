@@ -35,9 +35,10 @@ int main(int argc, char** argv, char **envp) {
         app.add_option("-o,--out", outDirectory, "output directory");
         CLI11_PARSE(app, argc, argv);
 
-        if(positional.size()>0){
+        if(positional.size()>1){
             if(!std::filesystem::exists(outDirectory))std::filesystem::create_directories(outDirectory);
-            std::filesystem::path filePath=positional[0];
+            std::filesystem::path filePath=positional.front();
+            if(std::filesystem::exists(filePath)){
             if(filePath.has_parent_path())
                 directory=filePath.parent_path();
             sylvanmats::antlr4::parse::G4Reader g4Reader;
@@ -49,10 +50,13 @@ int main(int argc, char** argv, char **envp) {
                 std::ofstream os(outDirectory.string()+"/"+codeGenerator.getParserClass()+".h");
                 std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
                 os.close();
-           });
+            });
+            }
+            else std::cout<<filePath<<" does not exist"<<std::endl;
         }
-        if(positional.size()>1){
-            std::filesystem::path stFilePath=positional[1];
+        if(!positional.empty()){
+            std::filesystem::path stFilePath=positional.back();
+            if(std::filesystem::exists(stFilePath)){
             if(stFilePath.has_parent_path())
                 directory=stFilePath.parent_path();
             sylvanmats::antlr4::parse::G4Reader g4PReader;
@@ -70,6 +74,8 @@ int main(int argc, char** argv, char **envp) {
                 std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
                 os.close();
             });
+            }
+            else std::cout<<stFilePath<<" does not exist"<<std::endl;
         }
     }
     catch(std::filesystem::filesystem_error &e) {

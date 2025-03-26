@@ -34,4 +34,5 @@
 cpp_modules/
 tmp/
 grammars/*
+/test/include/
 cantlrtool

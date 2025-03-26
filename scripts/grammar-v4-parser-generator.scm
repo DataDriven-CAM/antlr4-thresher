@@ -1,0 +1,58 @@
+#!/usr/bin/guile -s
+!#
+(use-modules (gnutls))
+(use-modules (ice-9 ftw))
+(gnutls-version)
+
+(define dirPath "../grammars-v4")
+(define grammarDirPath "")
+(define outPrefixPath "test/include/io/")
+(define outPath "")
+(define parserPath "")
+(define lexerPath "")
+(define parserLength 0)
+(define lexerLength 0)
+(define parserSuffix "Parser.g4")
+(define lexerSuffix "Lexer.g4")
+(define parserOffset (string-length parserSuffix))
+(define lexerOffset (string-length lexerSuffix))
+
+(define dir (opendir dirPath))
+(define dir2 0)
+(do ((entry (readdir dir) (readdir dir)))
+  ((eof-object? entry))
+    (set! grammarDirPath (string-append dirPath "/" entry))
+    (set! outPath (string-append outPrefixPath entry))
+    (if (and (string<> entry ".") (string<> entry "..") (eq? (stat:type  (stat grammarDirPath)) 'directory))
+        (begin
+    (set! dir2 (opendir grammarDirPath))
+    (set! parserPath "")
+    (set! lexerPath "")
+    (do ((entry2 (readdir dir2) (readdir dir2)))
+      ((eof-object? entry2))
+      (set! parserLength (- (string-length entry2) parserOffset))
+      (set! lexerLength (- (string-length entry2) lexerOffset))
+        (if (and (>= (string-length entry2) parserOffset) (string= (substring entry2 parserLength) parserSuffix))
+            (begin
+            (set! parserPath (string-append grammarDirPath "/" entry2))
+            )
+        (if (and (>= (string-length entry2) lexerOffset) (string= (substring entry2 lexerLength) lexerSuffix))
+            (begin
+            (set! lexerPath (string-append grammarDirPath "/" entry2))
+            )
+           #f 
+            )
+        )
+       )
+   (closedir dir2)
+        (if (and (> (string-length lexerPath) 0) (> (string-length parserPath) 0))
+            (begin (display "cantlrtool ")(display lexerPath)(display " ")(display parserPath)(display " -o ")(display outPath)(newline)
+                (system (string-append "cantlrtool " lexerPath " " parserPath " -o " outPath ))
+            )
+        #f
+        )
+    )
+        #f
+    )
+  )
+(closedir dir)

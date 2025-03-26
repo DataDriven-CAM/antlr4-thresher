@@ -121,6 +121,8 @@ namespace sylvanmats::antlr4::parse {
                 vertices.push_back({.start=&(*it), .token=STRING_LITERAL});
                 it=temp;
                 vertices.back().stop=&(*it);
+                    //std::u16string label(vertices.back().start, vertices.back().stop);
+                    //std::cout<<"STRING_LITERAL size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
                 bool hit=false;
@@ -170,7 +172,7 @@ namespace sylvanmats::antlr4::parse {
                                 iw.remove_prefix(std::min(iw.find_first_not_of(u" \t\r\v\n"), iw.size()));
                                 iw.remove_suffix(std::min(iw.size() - iw.find_last_not_of(u" \t\r\v\n") - 1, iw.size()));
                                 //std::trim(iw);
-                                //std::cout<<"option: "<<cv.to_bytes(iw)<<std::endl;
+                                std::cout<<"option: "<<cv.to_bytes(std::u16string(iw))<<std::endl;
                                 if(hitV)v=std::u16string(iw.begin(), iw.end());
                                 else p=std::u16string(iw.begin(), iw.end());
                                 hitV=!hitV;
@@ -432,6 +434,7 @@ namespace sylvanmats::antlr4::parse {
             }
             else if((*it)==u'['){
                 vertices.push_back({.start=&(*it), .token=LBRACK});
+                size_t lIndex=vertices.size()-1;
                 ++it;
                 vertices.back().stop=&(*it);
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
@@ -445,17 +448,22 @@ namespace sylvanmats::antlr4::parse {
                      if((*std::next(it))==u']' && (*it)==u'\\' && (*std::prev(it))!=u'\\'){it++;it++;}
                     else it++;
                 }
+                std::cout<<"dist "<<std::distance(temp, it)<<std::endl;
                 vertices.push_back({.start=&(*temp), .stop=&(*it), .token=ARGUMENT});
-                edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));
-                vertices.push_back({.start=&(*it), .token=RBRACK});
+                edges.push_back(std::make_tuple(lIndex, vertices.size()-1, 1));
+                temp=it;
                 ++it;
-                vertices.back().stop=&(*it);
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=RBRACK});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
-                hit=false;
-                parentIndex=bisect(depth-1, vertices.size()-1, hit);
-                if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
+                //hit=false;
+                //parentIndex=bisect(depth-1, vertices.size()-1, hit);
+                //std::cout<<"hit "<<hit<<" "<<parentIndex<<std::endl;
+                //if(hit)
+                edges.push_back(std::make_tuple(lIndex, vertices.size()-1, 1));
                 if(depth>0)depth--;
+                std::u16string label(vertices[lIndex].start, vertices.back().stop);
+                std::cout<<"[] size: "<<(vertices.back().stop-vertices[lIndex].start)<<" "<<cv.to_bytes(label)<<std::endl;
                 //depth++;
             }
             else if((*it)==u'{'){
@@ -528,6 +536,7 @@ namespace sylvanmats::antlr4::parse {
                 size_t parentIndex=bisect(depth-1, vertices.size()-1, hit);
                 if(hit)edges.push_back(std::make_tuple(parentIndex, vertices.size()-1, 1));
                 //depth++;
+                std::cout<<"!";
             }
             else if((*it)==u'\\' && (*(it+1))!=u'\\'){
                 vertices.push_back({.start=&(*it), .token=ESCSEQ});
