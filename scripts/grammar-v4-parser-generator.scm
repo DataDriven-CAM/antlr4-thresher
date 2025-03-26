@@ -6,7 +6,7 @@
 
 (define dirPath "../grammars-v4")
 (define grammarDirPath "")
-(define outPrefixPath "test/include/io/")
+(define outPrefixPath "test/include/")
 (define outPath "")
 (define parserPath "")
 (define lexerPath "")
@@ -17,12 +17,18 @@
 (define parserOffset (string-length parserSuffix))
 (define lexerOffset (string-length lexerSuffix))
 
+(let ((output-port (open-file "test/include/io/parsers.h" "w")))
+  (display "#pragma once" output-port)
+  (newline output-port)
+  (newline output-port)
+  (close output-port))
+
 (define dir (opendir dirPath))
 (define dir2 0)
 (do ((entry (readdir dir) (readdir dir)))
   ((eof-object? entry))
     (set! grammarDirPath (string-append dirPath "/" entry))
-    (set! outPath (string-append outPrefixPath entry))
+    (set! outPath (string-append outPrefixPath "io/" entry))
     (if (and (string<> entry ".") (string<> entry "..") (eq? (stat:type  (stat grammarDirPath)) 'directory))
         (begin
     (set! dir2 (opendir grammarDirPath))
@@ -55,4 +61,30 @@
         #f
     )
   )
+(closedir dir)
+(display (string-append outPrefixPath "io/"))
+(set! dir (opendir (string-append outPrefixPath "io/")))
+(do ((entry (readdir dir) (readdir dir)))
+  ((eof-object? entry))
+    (set! grammarDirPath (string-append outPrefixPath "io/" entry))
+    (if (and (string<> entry ".") (string<> entry "..") (eq? (stat:type  (stat grammarDirPath)) 'directory))
+        (begin
+    (set! dir2 (opendir grammarDirPath))
+    (do ((entry2 (readdir dir2) (readdir dir2)))
+      ((eof-object? entry2))
+    (if (and (string<> entry2 ".") (string<> entry2 ".."))
+        (begin
+        (let ((output-port (open-file "test/include/io/parsers.h" "a")))
+          (display (string-append "#include \"" grammarDirPath "/" entry2 "\"") output-port)
+          (newline output-port)
+          (close output-port))
+        )
+        #f
+        )
+     )
+   (closedir dir2)
+        )
+        #f
+    )
+ )
 (closedir dir)
