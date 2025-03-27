@@ -1,0 +1,10 @@
+TEST_CASE("test antlrv4 ~a ~a"){
+    std::string content="/pt:elements/pt:element[@symbol='C']";
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
+    std::u16string utf16 = utf16conv.from_bytes(content);
+    sylvanmats::antlr4::parse::~a ~a;
+    ~a(utf16, [](sylvanmats::antlr4::parse::LG& ldagGraph, sylvanmats::antlr4::parse::PG& dagGraph){
+    });
+ }
+
+

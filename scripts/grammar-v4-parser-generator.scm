@@ -75,7 +75,7 @@
     (if (and (string<> entry2 ".") (string<> entry2 ".."))
         (begin
         (let ((output-port (open-file "test/include/io/parsers.h" "a")))
-          (display (string-append "#include \"" grammarDirPath "/" entry2 "\"") output-port)
+          (display (string-append "#include \"" "io/" entry "/" entry2 "\"") output-port)
           (newline output-port)
           (close output-port))
         )

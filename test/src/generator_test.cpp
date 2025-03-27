@@ -10,6 +10,7 @@
 
 #define protected public
 #include "publishing/formatting.h"
+//#include "io/parsers.h"
 
 TEST_SUITE ("generator"){
     

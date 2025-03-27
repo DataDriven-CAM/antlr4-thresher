@@ -9,7 +9,7 @@ build/src/formatting_test.o: CXXFLAGS= -DNDEBUG -O3 -pthread -std=c++26 -fconcep
 build/src/formatting_test.o: src/formatting_test.cpp
 	$(CXX) $(CXXFLAGS) -c -o build/src/formatting_test.o src/formatting_test.cpp
 
-build/src/generator_test.o: CXXFLAGS= -DNDEBUG -O3 -pthread -std=c++26 -fconcepts-diagnostics-depth=2 -I../include -I../cpp_modules/doctest -I../src -I../src/parsing -I../cpp_modules/mio/include -I../cpp_modules/graph-v2/include -I../cpp_modules/zlib/dist/include -MMD -Wl,--allow-multiple-definition
+build/src/generator_test.o: CXXFLAGS= -DNDEBUG -O3 -pthread -std=c++26 -fconcepts-diagnostics-depth=2 -I../include -I./include -I../cpp_modules/doctest -I../src -I../src/parsing -I../cpp_modules/mio/include -I../cpp_modules/graph-v2/include -I../cpp_modules/zlib/dist/include -MMD -Wl,--allow-multiple-definition
 build/src/generator_test.o: src/generator_test.cpp
 	$(CXX) $(CXXFLAGS) -c -o build/src/generator_test.o src/generator_test.cpp
 

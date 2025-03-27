@@ -22,6 +22,7 @@
     "build": "cd test && pwd && mkdir -p build/src/parse && make -j 3 -f Makefile all",
     "fmt": "cd cpp_modules/fmt && mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../dist .. && make install",
     "gen": "guile ./scripts/grammar-v4-parser-generator.scm",
+    "gen-test": "guile ./scripts/grammar-v4-test-generator.scm",
     "test": "cnpm build && cd test && pwd && ./test --test-suite='generator'"
   }
 }
