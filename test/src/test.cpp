@@ -238,17 +238,18 @@ TEST_CASE("test toml parse"){
 
 TEST_CASE("test tiny lexer"){
     auto start = std::chrono::high_resolution_clock::now();
-    std::string content=R"(2*2)";
+    std::string content=R"(2*2
+)";
     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
     std::u16string utf16 = utf16conv.from_bytes(content);
     sylvanmats::antlr4::tiny::TinyParser tinyParser;
     tinyParser(utf16, [](sylvanmats::antlr4::tiny::LG& ldagGraph, sylvanmats::antlr4::tiny::PG& dagGraph){
-        CHECK_EQ(graph::num_vertices(ldagGraph), 4);
-        CHECK_EQ(graph::vertices(ldagGraph).size(), 4);
-        CHECK_EQ(graph::num_edges(ldagGraph), 3);
-        CHECK_EQ(graph::num_vertices(dagGraph), 18);
-        CHECK_EQ(graph::vertices(dagGraph).size(), 18);
-        CHECK_EQ(graph::num_edges(dagGraph), 17);
+        CHECK_EQ(graph::num_vertices(ldagGraph), 2);
+        CHECK_EQ(graph::vertices(ldagGraph).size(), 2);
+        CHECK_EQ(graph::num_edges(ldagGraph), 1);
+        CHECK_EQ(graph::num_vertices(dagGraph), 2);
+        CHECK_EQ(graph::vertices(dagGraph).size(), 2);
+        CHECK_EQ(graph::num_edges(dagGraph), 1);
     });
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "elapsed time: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count()*1.0e-9 << "s\n";

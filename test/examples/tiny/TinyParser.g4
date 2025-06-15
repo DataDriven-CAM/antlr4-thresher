@@ -4,7 +4,7 @@ options {
     tokenVocab = TinyLexer;
 }
 
-eq : term+;
+eq : term +;
 
 term : mconstant Times mconstant;
 mconstant : UnsignedInteger;
