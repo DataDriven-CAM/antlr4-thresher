@@ -59,7 +59,7 @@ namespace {namespace} {{
     void operator()(std::u16string& utf16, std::function<void(LG& ldagGraph, PG& dagGraph)> apply){{
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         vertices.push_back({{.parser_token=PARSER_ROOT, .token=LEXER_ROOT, .id=0}});
-        {token_vocab_instance}(utf16, [&](sylvanmats::antlr4::parse::LG& ldagGraph){{
+        {token_vocab_instance}(utf16, [&](LG& ldagGraph){{
 int     status;
         std::cout<<"ldagGraph "<<graph::num_vertices(ldagGraph)<<" "<<graph::num_edges(ldagGraph)<<std::endl;
         std::u16string::const_iterator it = utf16.begin();

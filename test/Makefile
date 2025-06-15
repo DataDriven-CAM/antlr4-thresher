@@ -13,7 +13,7 @@ build/src/generator_test.o: CXXFLAGS= -DNDEBUG -O3 -pthread -std=c++26 -fconcept
 build/src/generator_test.o: src/generator_test.cpp
 	$(CXX) $(CXXFLAGS) -c -o build/src/generator_test.o src/generator_test.cpp
 
-test: CXXFLAGS= -DNDEBUG -O3 -pthread -std=c++26 -I../include -I../cpp_modules/fmt/dist/include -I../cpp_modules/graph-v2/include -I../cpp_modules/mio/include -I../cpp_modules/doctest -MMD -MP
+test: CXXFLAGS= -DNDEBUG -O3 -pthread -std=c++26 -I./include -I../include -I../cpp_modules/fmt/dist/include -I../cpp_modules/graph-v2/include -I../cpp_modules/mio/include -I../cpp_modules/doctest -MMD -MP
 test: src/test.cpp
 	pwd
 	$(CXX) $(CXXFLAGS) -c -o build/src/test.o src/test.cpp 

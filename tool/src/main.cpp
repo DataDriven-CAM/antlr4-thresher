@@ -16,7 +16,7 @@
 
 #include "parse/G4Reader.h"
 #include "dsl/Morpher.h"
-
+#include "io/tikz/G4GraphPublisher.h"
 
 int main(int argc, char** argv, char **envp) {
     try{
@@ -24,17 +24,20 @@ int main(int argc, char** argv, char **envp) {
         std::string cantlrHome=(std::getenv("CANTLR_HOME")!=nullptr) ?std::getenv("CANTLR_HOME") : ".";
         CLI::App app{"C++ parser generator"};
         std::vector<std::string> positional;
-        std::string namespaceName="sylvanmats::antlr4::parse";
+        std::string namespaceName="sylvanmats::antlr4::";
         std::filesystem::path directory="./";
         std::filesystem::path outDirectory="./";
+        bool graphit{false};
         //app.set_help_flag("-h,--help", "Print this help message and exit");
         //app.set_help_all_flag("--help-all", "Expand all help");
         app.get_formatter()->column_width(25);
         app.add_option("-f,--file,custom", positional, "input grammars");
         app.add_option("--ns,--namespace", namespaceName, "namespace name");
-        app.add_option("-o,--out", outDirectory, "output directory");
+        CLI::Option* out=app.add_option("-o,--out", outDirectory, "output directory");
+        app.add_flag("-g,--graph", graphit, "Graph the rules'");
         CLI11_PARSE(app, argc, argv);
 
+        namespaceName+=(out) ? outDirectory.filename().string(): "parse";
         if(positional.size()>1){
             if(!std::filesystem::exists(outDirectory))std::filesystem::create_directories(outDirectory);
             std::filesystem::path filePath=positional.front();
@@ -60,7 +63,7 @@ int main(int argc, char** argv, char **envp) {
             if(stFilePath.has_parent_path())
                 directory=stFilePath.parent_path();
             sylvanmats::antlr4::parse::G4Reader g4PReader;
-            g4PReader(stFilePath, [&namespaceName, &directory, &outDirectory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
+            g4PReader(stFilePath, [&namespaceName, &directory, &outDirectory, &graphit](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
                 sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(namespaceName);
                 std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
                 if(options.count(u"tokenVocab")){
@@ -73,6 +76,14 @@ int main(int argc, char** argv, char **envp) {
                 std::ofstream os(outDirectory.string()+"/"+codeGenerator.getParserClass()+".h");
                 std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
                 os.close();
+                if(graphit){
+                    std::cout<<"g4 graph "<<std::endl;
+                    sylanmats::io::tikz::G4GraphPublisher<sylvanmats::antlr4::parse::G> g4GraphPublisher;
+                    std::string tikzContent=g4GraphPublisher(utf16, dagGraph);
+                    std::ofstream osTokz("./"+codeGenerator.getParserClass()+".tex");
+                    std::copy(tikzContent.begin(), tikzContent.end(), std::ostreambuf_iterator<char>(osTokz));
+                    osTokz.close();
+                }
             });
             }
             else std::cout<<stFilePath<<" does not exist"<<std::endl;

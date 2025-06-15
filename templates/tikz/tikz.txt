@@ -1,0 +1,4 @@
+
+\tikz [every node/.style = draw, mark/.style={{fill=black!33}}, mark/.default=]
+  \graph {{ {tree} }};
+
