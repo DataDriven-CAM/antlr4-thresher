@@ -30,9 +30,12 @@
 *.exe
 *.out
 *.app
+.vscode/
 /nbproject/
 cpp_modules/
 tmp/
 grammars/*
+/test/build/
 /test/include/
+/test/test
 cantlrtool
