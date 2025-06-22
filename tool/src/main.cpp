@@ -42,10 +42,11 @@ int main(int argc, char** argv, char **envp) {
             if(!std::filesystem::exists(outDirectory))std::filesystem::create_directories(outDirectory);
             std::filesystem::path filePath=positional.front();
             if(std::filesystem::exists(filePath)){
+                std::cout<<"parsing "<<filePath<<" "<<std::endl;
             if(filePath.has_parent_path())
                 directory=filePath.parent_path();
             sylvanmats::antlr4::parse::G4Reader g4Reader;
-            g4Reader(filePath, [&namespaceName, &directory, &outDirectory](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
+            g4Reader(filePath, [&namespaceName, &directory, &outDirectory, &graphit](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
                 sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(namespaceName);
                 sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
                 morpher(utf16, dagGraph);
@@ -53,6 +54,13 @@ int main(int argc, char** argv, char **envp) {
                 std::ofstream os(outDirectory.string()+"/"+codeGenerator.getParserClass()+".h");
                 std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
                 os.close();
+                if(graphit){
+                    sylanmats::io::tikz::G4GraphPublisher<sylvanmats::antlr4::parse::G> g4GraphPublisher;
+                    std::string tikzContent=g4GraphPublisher(utf16, dagGraph);
+                    std::ofstream osTokz("./"+codeGenerator.getParserClass()+".tex");
+                    std::copy(tikzContent.begin(), tikzContent.end(), std::ostreambuf_iterator<char>(osTokz));
+                    osTokz.close();
+                }
             });
             }
             else std::cout<<filePath<<" does not exist"<<std::endl;
@@ -60,6 +68,7 @@ int main(int argc, char** argv, char **envp) {
         if(!positional.empty()){
             std::filesystem::path stFilePath=positional.back();
             if(std::filesystem::exists(stFilePath)){
+                std::cout<<"parsing "<<stFilePath<<" "<<std::endl;
             if(stFilePath.has_parent_path())
                 directory=stFilePath.parent_path();
             sylvanmats::antlr4::parse::G4Reader g4PReader;
@@ -77,7 +86,7 @@ int main(int argc, char** argv, char **envp) {
                 std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
                 os.close();
                 if(graphit){
-                    std::cout<<"g4 graph "<<std::endl;
+                    //std::cout<<"g4 graph "<<std::endl;
                     sylanmats::io::tikz::G4GraphPublisher<sylvanmats::antlr4::parse::G> g4GraphPublisher;
                     std::string tikzContent=g4GraphPublisher(utf16, dagGraph);
                     std::ofstream osTokz("./"+codeGenerator.getParserClass()+".tex");
@@ -94,6 +103,7 @@ int main(int argc, char** argv, char **envp) {
         return  EXIT_FAILURE;
     }
     catch(const std::exception& e) {
+        std::cout<<"Ex "<<e.what()<<std::endl;;
         print_exception(e);
         return  EXIT_FAILURE;
     }

@@ -4,4 +4,4 @@ UnsignedInteger : ( Digit )+;
 Times : '*';
 Minus : '-';
 Plus : '+';
-Digit : '0' .. '9';
+fragment Digit : '0' .. '9';

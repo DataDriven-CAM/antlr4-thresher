@@ -21,8 +21,10 @@
 #include <algorithm>
 #include <unordered_map>
 #include <ranges>
+#include <stack>
 
 #include "parse/dag_graph.h"
+#include "parse/Exception.h"
 
 namespace std{
     size_t u16ncmp(const char16_t* a, const char16_t* b, size_t n);
@@ -36,12 +38,13 @@ namespace sylvanmats::antlr4::parse {
         G dagGraph;
         std::vector<ast_node> vertices;
         std::vector<std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>> edges;
-        std::vector<std::vector<size_t>> depthProfile;
+        std::stack<size_t> associates;
         
         std::filesystem::path directory="./";
         std::unordered_map<std::u16string, std::u16string> options;
         std::vector<std::u16string> tokens;
-    
+        bool fragger=false;
+        
     public:
         G4Reader() = default;
         G4Reader(const G4Reader& orig) = delete;
@@ -57,7 +60,11 @@ namespace sylvanmats::antlr4::parse {
 
         std::function<bool(std::u16string::const_iterator&)> RParen = [&](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=[&]()->bool{if((*temp)==u')'){temp++;return true;}else return false;}(); if(ret)it=temp;return ret;};
 
-        std::function<bool(std::u16string::const_iterator&)> Colon = [](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=(*temp)==u':'; if(ret)it=temp;return ret;};
+        std::function<bool(std::u16string::const_iterator&)> LBrack = [&](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=[&]()->bool{if((*temp)==u'['){temp++;return true;}else return false;}(); if(ret)it=temp;return ret;};
+
+        std::function<bool(std::u16string::const_iterator&)> RBrack = [&](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=[&]()->bool{if((*temp)==u']'){temp++;return true;}else return false;}(); if(ret)it=temp;return ret;};
+
+        std::function<bool(std::u16string::const_iterator&)> Colon = [](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=(*temp)==u':'; temp++; if(ret)it=temp;return ret;};
 
         std::function<bool(std::u16string::const_iterator&)> Question = [](std::u16string::const_iterator& it) {std::u16string::const_iterator temp=it; bool ret=(*temp)==u'?';temp++; if(ret)it=temp;return ret;};
 
@@ -195,31 +202,6 @@ namespace sylvanmats::antlr4::parse {
                                 || ((*it)>=u'\u0300' && (*it)<=u'\u036F')
                                 || ((*it)>=u'\u203F' && (*it)<=u'\u2040');
         };
-
-        size_t bisect(size_t currentDepth, size_t target, bool& hit){
-            std::vector<size_t>& depthVector=depthProfile[currentDepth];
-            int low = 0;
-            int high = depthVector.size() - 1;
-
-            if (target < depthVector[low]) {
-                return 0; // Target is below the range of depthVector
-            }
-
-            while (low <= high) {
-                int mid = low + (high - low) / 2;
-
-                if (depthVector[mid] < target) {
-                    low = mid + 1;
-                } else {
-                    high = mid - 1;
-                }
-            }
-
-            // If the target is smaller than all elements, return -1
-            if(high >= 0) hit=true;
-            return high >= 0 ? depthVector[high] : 0; 
-        };
-        
 
     };
 }

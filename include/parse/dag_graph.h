@@ -18,7 +18,6 @@ namespace sylvanmats::antlr4::parse {
         LEXER,
         PARSER,
         GRAMMAR,
-        FRAGMENT,
         MODE,
         TYPE,
         COLON,

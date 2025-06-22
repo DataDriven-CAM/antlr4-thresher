@@ -6,9 +6,11 @@
 #include <string>
 #include <functional>
 #include <filesystem>
+#include <tuple>
 
 #include "parse/dag_graph.h"
 #include "publishing/CodeGenerator.h"
+#include "dsl/Exception.h"
 
 namespace sylvanmats::dsl{
     class Morpher{
@@ -29,7 +31,7 @@ namespace sylvanmats::dsl{
     private:
         size_t depth=0;
         bool orOn=false;
-        void operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v, bool frag=false);
-        bool recurseLexerRule(sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& source, std::vector<std::u16string>& expr);
+        void operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v);
+        bool recurseLexerRule(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& source, std::vector<std::u16string>& expr);
     };
 }

@@ -43,8 +43,8 @@ namespace sylanmats::io::tikz{
                 if(uValue.token==sylvanmats::antlr4::parse::SEMI)continue;
                 std::u16string label{};
                 label.assign(uValue.start, uValue.stop);
-                if(!label.empty())std::cout<<label.size()<<" label "<<cv.to_bytes(label)<<"|"<<size(graph::edges(dagGraph, uid))<<std::endl;
-                if(label.empty())std::cout<<label.size()<<" label root "<<"|"<<std::endl;
+                //if(!label.empty())std::cout<<label.size()<<" label "<<cv.to_bytes(label)<<"|"<<size(graph::edges(dagGraph, uid))<<std::endl;
+                //if(label.empty())std::cout<<label.size()<<" label root "<<"|"<<std::endl;
                 (!label.empty()) ? tree.append(cv.to_bytes(label)) : tree.append("root");
                 //tree.append(std::to_string(uValue.obj_size));
                 if(size(graph::edges(dagGraph, uid))>1)tree.append("{");
@@ -53,14 +53,14 @@ namespace sylanmats::io::tikz{
                 size_t notchDepth=depth;
                 for (auto&& [vid, wid, wv] : dfs) {
                   auto ev=edge_value(dagGraph, wv);
-                  std::cout<<typeid(wv).name()<<" "<<depth<<" "<<dfs.depth()<<" "<<size(graph::edges(dagGraph, vid))<<" "<<visited[vid]<<" "<<size(graph::edges(dagGraph, wid))<<" "<<visited[wid]<<std::endl;
+                  //std::cout<<typeid(wv).name()<<" "<<depth<<" "<<dfs.depth()<<" "<<size(graph::edges(dagGraph, vid))<<" "<<visited[vid]<<" "<<size(graph::edges(dagGraph, wid))<<" "<<visited[wid]<<std::endl;
                   //if (!visited[ev]) {
                   if(depth>dfs.depth()){
                     if(!tree.empty() && size(graph::edges(dagGraph, vid))>1 && size(graph::edges(dagGraph, vid))==visited[vid])tree.append("}");
                     if(!tree.empty())tree.append(";\n");
                     auto vValue=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, vid));
                     label.assign(vValue.start, vValue.stop);
-                    if(!label.empty())std::cout<<"\tdepth>label "<<cv.to_bytes(label)<<std::endl;
+                    //if(!label.empty())std::cout<<"\tdepth>label "<<cv.to_bytes(label)<<std::endl;
                     if(!label.empty())tree.append(cv.to_bytes(label));
                   }
                     auto& wValue=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, wid));
@@ -70,7 +70,7 @@ namespace sylanmats::io::tikz{
                     if(wValue.token==sylvanmats::antlr4::parse::SEMI){
                          label.assign(wValue.start, wValue.stop);
                         std::string pairKeyName=cv.to_bytes(label);
-                std::cout<<"semi "<<pairKeyName<<std::endl;
+                //std::cout<<"semi "<<pairKeyName<<std::endl;
                         size_t pos=std::string::npos;
                         while ((pos = pairKeyName.find("_")) != std::string::npos) {
                             pairKeyName.replace(pos, 1, R"(-)");
@@ -88,10 +88,10 @@ namespace sylanmats::io::tikz{
                 }
                     if(size(graph::edges(dagGraph, uid))>1)tree.append("};\n");
             }
-            std::cout<<"tree "<<std::endl;
+            //std::cout<<"tree "<<std::endl;
             auto cArg=fmt::arg("tree", tree);
             //auto dArg=fmt::arg("leafs", indices);
-            std::cout<<"render "<<graphTemplate<<std::endl;
+            //std::cout<<"render "<<graphTemplate<<std::endl;
             std::string ret=render(graphTemplate, fmt::make_format_args(cArg));
             return ret;
         };
