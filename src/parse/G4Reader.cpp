@@ -459,9 +459,9 @@ namespace sylvanmats::antlr4::parse {
                     }while(NameChar(it));
                     vertices.back().stop=&(*it);
                     vertices.back().frag=fragger;
-                    //std::u16string label(vertices.back().start, vertices.back().stop);
+                    std::u16string label(vertices.back().start, vertices.back().stop);
                     //if(std::islower(label.at(0)))
-                    //        std::cout<<"ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
+                           std::cout<<fragger<<" ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                     fragger=false;
                     return true;
@@ -474,23 +474,22 @@ namespace sylvanmats::antlr4::parse {
             temp=it;
             count++;
             }
-            std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& a, std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& b){return std::get<0>(a)<std::get<0>(b) /*|| std::get<1>(a)<std::get<1>(b)*/;});
-//            std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& a, std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& b){return /*std::get<0>(a)<std::get<0>(b) ||*/ std::get<1>(a)<std::get<1>(b);});
+            std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& a, std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& b){if(std::get<0>(a)!=std::get<0>(b)){return std::get<0>(a)<std::get<0>(b);} return std::get<1>(a)<std::get<1>(b);});
             using value = std::ranges::range_value_t<decltype(edges)>;
             graph::vertex_id_t<G> N = static_cast<graph::vertex_id_t<G>>(size(graph::vertices(dagGraph)));
             using edge_desc  = graph::edge_info<graph::vertex_id_t<G>, true, void, int>;
             dagGraph.reserve_vertices(vertices.size());
             dagGraph.reserve_edges(edges.size());
-            dagGraph.load_edges(edges, [](const value& val) -> edge_desc {
-//                    std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
-                return edge_desc{std::get<0>(val), std::get<1>(val), std::get<2>(val)};
-              }, N);
             dagGraph.load_vertices(vertices, [&](ast_node& nm) {
                 auto uid = static_cast<graph::vertex_id_t<G>>(&nm - vertices.data());
 //                std::cout<<"vertex "<<uid<<std::endl;
                 return graph::copyable_vertex_t<graph::vertex_id_t<G>, ast_node>{uid, nm};
             });
-            //display();
+            dagGraph.load_edges(edges, [](const value& val) -> edge_desc {
+//                    std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
+                return edge_desc{std::get<0>(val), std::get<1>(val), std::get<2>(val)};
+              }, N);
+            display();
             apply(utf16, options, dagGraph);
 
         } catch (std::exception& e) {
