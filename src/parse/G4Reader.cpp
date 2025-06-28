@@ -460,8 +460,7 @@ namespace sylvanmats::antlr4::parse {
                     vertices.back().stop=&(*it);
                     vertices.back().frag=fragger;
                     std::u16string label(vertices.back().start, vertices.back().stop);
-                    //if(std::islower(label.at(0)))
-                           std::cout<<fragger<<" ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
+                    //if(std::islower(label.at(0)))std::cout<<fragger<<" ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                     fragger=false;
                     return true;
@@ -489,7 +488,7 @@ namespace sylvanmats::antlr4::parse {
 //                    std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
                 return edge_desc{std::get<0>(val), std::get<1>(val), std::get<2>(val)};
               }, N);
-            display();
+            //display();
             apply(utf16, options, dagGraph);
 
         } catch (std::exception& e) {
@@ -505,6 +504,15 @@ namespace sylvanmats::antlr4::parse {
             std::u16string label{};
             label.assign(uValue.start, uValue.stop);
             std::cout<<" "<<cv.to_bytes(label)<<" "<<size(graph::edges(dagGraph, uid))<<std::endl;
+            if(size(graph::edges(dagGraph, u))>0)std::cout<<"\t";
+            for (auto&& oe : graph::edges(dagGraph, u)) {
+                graph::container::csr_row<unsigned int>& v=dagGraph[graph::target_id(dagGraph, oe)];
+                auto& nu=graph::vertex_value(dagGraph, u);
+                auto& nv=graph::vertex_value(dagGraph, v);
+                label.assign(nv.start, nv.stop);
+                std::cout<<cv.to_bytes(label)<<" ";
+            }
+            if(size(graph::edges(dagGraph, u))>0)std::cout<<std::endl;
         }
     }
 }

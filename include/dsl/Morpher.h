@@ -29,7 +29,6 @@ namespace sylvanmats::dsl{
         void operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph);
 
     private:
-        size_t depth=0;
         bool orOn=false;
         void operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v);
         bool recurseLexerRule(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& source, std::vector<std::u16string>& expr);
