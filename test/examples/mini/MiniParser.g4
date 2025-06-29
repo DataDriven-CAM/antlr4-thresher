@@ -7,3 +7,9 @@ options {
 path : literal;
 
 literal : StringLiteral;
+
+additiveexpr
+    : multiplicativeexpr ((PLUS | MINUS) multiplicativeexpr)*
+    ;
+
+multiplicativeexpr : STAR;

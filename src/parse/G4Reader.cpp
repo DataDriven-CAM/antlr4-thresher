@@ -16,6 +16,7 @@ namespace std{
             if(a[i]>b[i])return 1;
             else if(a[i]<b[i])return -1;
         }
+        if(std::iswalnum(a[n])!=0)return -1;
         return 0;
     }
 
@@ -290,6 +291,13 @@ namespace sylvanmats::antlr4::parse {
                 }
 
             }
+            else if(std::u16ncmp(&(*it), u"skip", 4)==0){
+                vertices.push_back({.start=&(*it), .token=SKIP});
+                std::advance(it, 4);
+                vertices.back().stop=&(*it);
+                edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
+                //associates.push(vertices.size()-1);
+            }
             else if(std::u16ncmp(&(*it), u"import", 6)==0){
                 vertices.push_back({.start=&(*it), .token=IMPORT});
                 std::advance(it, 6);
@@ -445,11 +453,11 @@ namespace sylvanmats::antlr4::parse {
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(std::u16ncmp(&(*it), u"->", 2)==0){
-                associates.push(vertices.size());
                 vertices.push_back({.start=&(*it), .token=RARROW});
                 std::advance(it, 2);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
+                associates.push(vertices.size()-1);
             }
             else if([&]()->bool{
                 if(NameStartChar(it)){
@@ -460,7 +468,7 @@ namespace sylvanmats::antlr4::parse {
                     vertices.back().stop=&(*it);
                     vertices.back().frag=fragger;
                     std::u16string label(vertices.back().start, vertices.back().stop);
-                    //if(std::islower(label.at(0)))std::cout<<fragger<<" ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
+                    // if(std::islower(label.at(0)) && label.at(0)==u't')std::cout<<fragger<<" ID size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
                     edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                     fragger=false;
                     return true;

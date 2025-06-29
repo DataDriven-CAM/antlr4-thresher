@@ -50,6 +50,7 @@ int main(int argc, char** argv, char **envp) {
                 sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(namespaceName);
                 sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
                 morpher(utf16, dagGraph);
+                codeGenerator.appendToken("LEXER_ENDOFFILE");
                 std::string&& content=codeGenerator();
                 std::ofstream os(outDirectory.string()+"/"+codeGenerator.getParserClass()+".h");
                 std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
