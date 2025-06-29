@@ -1,8 +1,13 @@
 lexer grammar MiniLexer;
 
+COMMA      : ',';
 MINUS      : '-';
 PLUS       : '+';
 STAR       : '*';
+OP         : '(';
+CP         : ')';
+QM         : '?';
+KW_ELEMENT                : 'element';
 
 IntegerLiteral   : FragDigits;
 DecimalLiteral   : '.' FragDigits | FragDigits '.' [0-9]*;

@@ -149,18 +149,23 @@ namespace sylvanmats::dsl{
                 else if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr.back()+=u" && ";
                 if(vp.token==sylvanmats::antlr4::parse::PLUS)expr.back()+=u"[&]()->bool{bool ret=false;while(";
                 else if(vp.token==sylvanmats::antlr4::parse::STAR)expr.back()+=u"[&]()->bool{bool ret=true;while(";
-                else if(vp.token==sylvanmats::antlr4::parse::QUESTION)expr.back()+=u"[&]()->bool{bool ret=";
-                if(!lexerInstance.empty())
+                else expr.back()+=u"[&]()->bool{bool ret=false;if(";
+                if(!lexerInstance.empty()){
                     if(std::isupper(expr2.at(0))){
                         std::transform(expr2.cbegin(), expr2.cend(), expr2.begin(), [](const char16_t& c){return std::toupper(c);});
-                        expr.back()+=u"[&]()->bool{bool ret=graph::vertex_value(ldagGraph, ldagGraph[s.index]).token==LEXER_"+expr2+u"? true : false; if(ret){"+tempInc+u";return true;}else{ return false;}}()";
-                        }
+                        expr.back()+=u"[&]()->bool{bool ret=graph::vertex_value(ldagGraph, ldagGraph[s.index]).token==LEXER_"+expr2+u"? true : false; if(ret){"+tempInc+u";}return ret;}()){ret=true;}return ret;}()";
+                    }
                     else
-                        expr.back()+=expr2+u"(ldagGraph, s)";
-                else
-                    expr.back()+=expr2+u"(temp)";
-//                std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
-//                std::cout<<"recurse ID "<<cv.to_bytes(expr2)<<" "<<size(graph::edges(dagGraph, v))<<" "<<(vp.token==sylvanmats::antlr4::parse::PLUS)<<std::endl;
+                        expr.back()+=expr2+u"(ldagGraph, s)){ret=true;}return ret;}()";
+                }
+                else{
+                    expr.back()+=expr2+u"(temp)){ret=true;}return ret;}()";
+                }
+                if(vp.token==sylvanmats::antlr4::parse::PLUS){expr.back()+=u"";if(expr.size()>=2){expr[expr.size()-2]+=expr.back();expr.pop_back();}}
+                else if(vp.token==sylvanmats::antlr4::parse::STAR){expr.back()+=u"";if(expr.size()>=2){expr[expr.size()-2]+=expr.back();expr.pop_back();}}
+                else {expr.back()+=u"";if(expr.size()>=2){expr[expr.size()-2]+=expr.back();expr.pop_back();}}
+               std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
+               if(vp.token==sylvanmats::antlr4::parse::QUESTION)std::cout<<"recurse ID "<<cv.to_bytes(expr.back())<<" "<<(vp.token==sylvanmats::antlr4::parse::QUESTION)<<std::endl;
                 orOn=false;
             }
             else if(vv.token==sylvanmats::antlr4::parse::LPAREN){
@@ -175,9 +180,14 @@ namespace sylvanmats::dsl{
                 orOn=false;
                 auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(expr.size()>=2 && (vp.token!=sylvanmats::antlr4::parse::PLUS && vp.token!=sylvanmats::antlr4::parse::STAR && vp.token!=sylvanmats::antlr4::parse::QUESTION)){
-                    expr[expr.size()-2]+=expr.back();
-                    expr.pop_back();
+                if(vp.token==sylvanmats::antlr4::parse::PLUS){
+                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;while("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
+                }
+                else if(vp.token==sylvanmats::antlr4::parse::STAR){
+                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=true;while("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
+                }
+                else {
+                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;if("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
                 }
             }
             else if(vv.token==sylvanmats::antlr4::parse::LBRACK){
@@ -274,36 +284,36 @@ namespace sylvanmats::dsl{
                 expr.back()+=u" !";
             }
             else if(vv.token==sylvanmats::antlr4::parse::PLUS){
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-//                std::cout<<"2 Plus "<<v.index<<" "<<vm.token<<" "<<sylvanmats::antlr4::parse::RPAREN<<" "<<expr.size()<<std::endl;
-                /*if(vm.token==sylvanmats::antlr4::parse::RPAREN){
-                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";expr.pop_back();}
-                }
-                else */if(vm.token!=sylvanmats::antlr4::parse::RBRACK){
-                    if(vm.token!=sylvanmats::antlr4::parse::ID){if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";expr.pop_back();}}
-                    else {expr.back()+=u"){ret=true;}return ret;}()";if(expr.size()>=2){expr[expr.size()-2]+=expr.back();expr.pop_back();}}
-                }
+//                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+// //                std::cout<<"2 Plus "<<v.index<<" "<<vm.token<<" "<<sylvanmats::antlr4::parse::RPAREN<<" "<<expr.size()<<std::endl;
+//                 /*if(vm.token==sylvanmats::antlr4::parse::RPAREN){
+//                     if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";expr.pop_back();}
+//                 }
+//                 else */if(vm.token!=sylvanmats::antlr4::parse::RBRACK){
+//                     if(vm.token!=sylvanmats::antlr4::parse::ID){if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;while("+expr.back()+u"){ret=true;}return ret;}()";expr.pop_back();}}
+//                     else {expr.back()+=u"){ret=true;}return ret;}()";if(expr.size()>=2){expr[expr.size()-2]+=expr.back();expr.pop_back();}}
+//                 }
             }
             else if(vv.token==sylvanmats::antlr4::parse::STAR){
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(vm.token!=sylvanmats::antlr4::parse::RBRACK){
-                    if(vm.token!=sylvanmats::antlr4::parse::ID){if(expr.size()>=2)expr[expr.size()-2]+=u"[&]()->bool{bool ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";}
-                    else {expr.back()+=u"){ret=true;}return ret;}()";if(expr.size()>=2)expr[expr.size()-2]+=expr.back();}
-                    //std::u16string label{};
-                    //label=expr.back();
-                    //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
-                    //std::cout<<" STAR "<<cv.to_bytes(label)<<std::endl;
-                    if(expr.size()>=2){expr.pop_back();}
-                }
+                // auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                // if(vm.token!=sylvanmats::antlr4::parse::RBRACK){
+                //     if(vm.token!=sylvanmats::antlr4::parse::ID){if(expr.size()>=2)expr[expr.size()-2]+=u"[&]()->bool{bool ret=true;while("+expr.back()+u"){ret=true;}return ret;}()";}
+                //     else {expr.back()+=u"){ret=true;}return ret;}()";if(expr.size()>=2)expr[expr.size()-2]+=expr.back();}
+                //     //std::u16string label{};
+                //     //label=expr.back();
+                //     //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
+                //     //std::cout<<" STAR "<<cv.to_bytes(label)<<std::endl;
+                //     if(expr.size()>=2){expr.pop_back();}
+                // }
             }
             else if(vv.token==sylvanmats::antlr4::parse::QUESTION){
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
-                if(vm.token==sylvanmats::antlr4::parse::RBRACE){}
+                /*auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                if(vm.token==sylvanmats::antlr4::parse::RBRACE || vm.token==sylvanmats::antlr4::parse::RPAREN){}
                 else if(vm.token!=sylvanmats::antlr4::parse::RBRACK){
                     if(vm.token!=sylvanmats::antlr4::parse::ID){if(expr.size()>=2)expr[expr.size()-2]+=u"[&]()->bool{bool ret="+expr.back()+u"? true : false; if(ret){return true;}else{ return true;}}()";}
                     else {expr.back()+=u"? true : false; if(ret){return true;}else{ return true;}}()";if(expr.size()>=2)expr[expr.size()-2]+=expr.back();}
                     if(expr.size()>=2){expr.pop_back();}
-                }
+                }*/
             }
             else if(vv.token==sylvanmats::antlr4::parse::RANGE){
                 rangeOn=true;
