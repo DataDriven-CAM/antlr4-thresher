@@ -71,7 +71,7 @@ namespace {namespace} {{
         std::u16string::const_iterator temp=it;
         vertices.push_back({{.start=&(*it), .stop=&(*it), .token=LEXER_ROOT}});
 {rules_ladder}
-            std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>& a, std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>& b){{return std::get<0>(a)<std::get<0>(b) || std::get<1>(a)<std::get<1>(b);}});
+            std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>& a, std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>& b){{if(std::get<0>(a)!=std::get<0>(b)){{return std::get<0>(a)<std::get<0>(b);}} return std::get<1>(a)<std::get<1>(b);}});
             using value = std::ranges::range_value_t<decltype(edges)>;
             graph::vertex_id_t<LG> N = static_cast<graph::vertex_id_t<LG>>(size(graph::vertices(dagGraph)));
             using edge_desc  = graph::edge_info<graph::vertex_id_t<LG>, true, void, int>;
