@@ -211,7 +211,7 @@ namespace sylvanmats::antlr4::parse {
                                 wv.remove_suffix(std::min(wv.size() - wv.find_last_not_of(u" \t\r\v\n") - 1, wv.size()));
                             std::u16string w(wv.begin(), wv.end());
                             if(w.empty())continue;
-                            std::cout<<"token: "<<cv.to_bytes(w)<<std::endl;
+                            // std::cout<<"token: "<<cv.to_bytes(w)<<std::endl;
                             tokens.push_back(w  );
                         }                        
                         vertices.push_back({.start=&(*it), .token=TOK_RBRACE});
@@ -340,6 +340,18 @@ namespace sylvanmats::antlr4::parse {
             else if(std::u16ncmp(&(*it), u"type", 4)==0){
                 vertices.push_back({.start=&(*it), .token=TYPE});
                 std::advance(it, 4);
+                vertices.back().stop=&(*it);
+                edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
+            }
+            else if(std::u16ncmp(&(*it), u"pushMode", 8)==0){
+                vertices.push_back({.start=&(*it), .token=PUSH_MODE});
+                std::advance(it, 8);
+                vertices.back().stop=&(*it);
+                edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
+            }
+            else if(std::u16ncmp(&(*it), u"popMode", 7)==0){
+                vertices.push_back({.start=&(*it), .token=POP_MODE});
+                std::advance(it, 7);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }

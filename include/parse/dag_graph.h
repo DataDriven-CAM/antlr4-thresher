@@ -21,6 +21,8 @@ namespace sylvanmats::antlr4::parse {
         GRAMMAR,
         MODE,
         TYPE,
+        PUSH_MODE,
+        POP_MODE,
         COLON,
         SEMI,
         LPAREN,
