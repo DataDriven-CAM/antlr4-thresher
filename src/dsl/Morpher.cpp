@@ -63,7 +63,6 @@ namespace sylvanmats::dsl{
             else if(nv.token==sylvanmats::antlr4::parse::COLON && !label.empty()){
                 expr.push_back(std::u16string{});
                 recurseLexerRule(g4Buffer, dagGraph, o, expr);
-                if(skip){skip=false;continue;}
                 if(expr.back().empty())expr.back()=u"false";
                 std::u16string exprLine{};
                 for(std::u16string& entry : expr){exprLine.append(entry);}
@@ -71,12 +70,13 @@ namespace sylvanmats::dsl{
                 std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char16_t& c){return std::toupper(c);});
                 // std::cout<<cv.to_bytes(label)<<" COLON: "<<" "<<frag<<std::endl;
                 if(std::isupper(label.at(0)))
-                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
+                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, skip, cv.to_bytes(exprLine));
                 else
-                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
+                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, skip, cv.to_bytes(exprLine));
                 codeGenerator.appendToken(cv.to_bytes(cT));
                 label.clear();
                 frag=false;
+                skip=false;
             }
             else if(nv.token==sylvanmats::antlr4::parse::IMPORT){
                 // std::cout<<"token==IMPORT "<<size(graph::edges(dagGraph, o))<<std::endl;
@@ -277,6 +277,11 @@ namespace sylvanmats::dsl{
                 expr.back()+=u" || ";
             }
             else if(vv.token==sylvanmats::antlr4::parse::NOT){
+                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                if(vm.token!=sylvanmats::antlr4::parse::COLON && vm.token!=sylvanmats::antlr4::parse::PIPE && vm.token!=sylvanmats::antlr4::parse::LPAREN && vm.token!=sylvanmats::antlr4::parse::LBRACK && vm.token!=sylvanmats::antlr4::parse::NOT && vm.token!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
+                else if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr.back()+=u" && ";
+                else if(vm.token==sylvanmats::antlr4::parse::RBRACK)expr.back()+=u" && ";
+                else if(vm.token==sylvanmats::antlr4::parse::STRING_LITERAL)expr.back()+=u" && ";
                 expr.back()+=u" !";
             }
             else if(vv.token==sylvanmats::antlr4::parse::PLUS){

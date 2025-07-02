@@ -78,6 +78,7 @@ namespace sylvanmats::antlr4::parse {
       TOKEN token;
       PARSE_MODE mode=PARSE_MODE::DEFAULT;
       bool frag=false;
+      bool skip=false;
     };
 
     using G = graph::container::compressed_graph<int, ast_node>;

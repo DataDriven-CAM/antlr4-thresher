@@ -5,3 +5,5 @@ Times : '*';
 Minus : '-';
 Plus : '+';
 fragment Digit : '0' .. '9';
+
+STRING        : '"' ~[<"]* '"' | '\'' ~[<']* '\'';

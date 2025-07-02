@@ -290,11 +290,11 @@ namespace sylvanmats::publishing{
         T& getTokenVocab(){return tokenVocab;};
         void setTokenPrefix(T tokenPrefix){this->tokenPrefix=tokenPrefix;};
         void appendToken(T t){tokens.push_back(t);};
-        void appendLexerRuleClass(T t, T mode, T token, bool frag, T expr){
+        void appendLexerRuleClass(T t, T mode, T token, bool frag, bool skip    , T expr){
             lexerRuleClasses.push_back(std::make_tuple(t, expr));
-            if(!frag)ladderRules.push_back(std::make_tuple(t, mode, token, true));
+            if(!frag && !skip)ladderRules.push_back(std::make_tuple(t, mode, token, true));
         };
-        void appendParserRuleClass(T t, T mode, T token, bool frag, T expr){
+        void appendParserRuleClass(T t, T mode, T token, bool frag, bool skip, T expr){
             if(primaryParserRule.empty())primaryParserRule=t;
             parserRuleClasses.push_back(std::make_tuple(t, mode, expr));
             T cT=t;
