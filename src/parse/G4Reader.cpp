@@ -291,7 +291,7 @@ namespace sylvanmats::antlr4::parse {
                 }
 
             }
-            else if(std::u16ncmp(&(*it), u"skip", 4)==0){
+            else if(std::u16ncmp(&(*it), u"skip", 4)==0 || std::u16ncmp(&(*it), u"more", 4)==0){
                 vertices.push_back({.start=&(*it), .token=SKIP});
                 std::advance(it, 4);
                 vertices.back().stop=&(*it);

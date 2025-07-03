@@ -28,10 +28,7 @@ namespace {namespace} {{
     }};
 
     enum MODE{{
-        DEFAULT,
-        Options,
-        Tokens,
-        Channels
+{modes}
     }};
 
     struct ast_node{{
@@ -49,6 +46,7 @@ namespace {namespace} {{
         LG dagGraph;
         std::vector<ast_node> vertices;
         std::vector<std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>> edges;
+        MODE mode = DEFAULT;
         
         {token_vocab_class} {token_vocab_instance};
     

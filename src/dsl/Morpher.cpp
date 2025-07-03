@@ -69,8 +69,9 @@ namespace sylvanmats::dsl{
                 std::u16string cT=tokenPrefix+label;
                 std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char16_t& c){return std::toupper(c);});
                 // std::cout<<cv.to_bytes(label)<<" COLON: "<<" "<<frag<<std::endl;
+                std::string mode=(!currentMode.empty()) ? cv.to_bytes(currentMode.back()): "";
                 if(std::isupper(label.at(0)))
-                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, skip, cv.to_bytes(exprLine));
+                    codeGenerator.appendLexerRuleClass(cv.to_bytes(label), mode, cv.to_bytes(cT), frag, skip, cv.to_bytes(exprLine));
                 else
                     codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, skip, cv.to_bytes(exprLine));
                 codeGenerator.appendToken(cv.to_bytes(cT));
@@ -122,6 +123,17 @@ namespace sylvanmats::dsl{
                     }
                 }
                 }
+            }
+            else if(nv.token==sylvanmats::antlr4::parse::MODE){
+                for (auto&& ipe : graph::edges(dagGraph, o)){
+                    graph::container::csr_row<unsigned int>& ip=dagGraph[graph::target_id(dagGraph, ipe)];
+                    auto& ipv=graph::vertex_value(dagGraph, ip);
+                    std::u16string ipvStr(ipv.start, ipv.stop);
+                    if(ipv.token==sylvanmats::antlr4::parse::ID){
+                    std::cout<<"mode push to "<<cv.to_bytes(ipvStr)<<std::endl;
+                    currentMode.push_back(ipvStr);
+                    }
+                }                                
             }
         }
     }
@@ -311,7 +323,7 @@ namespace sylvanmats::dsl{
                                     graph::container::csr_row<unsigned int>& ip=dagGraph[graph::target_id(dagGraph, ipe)];
                                     auto& ipv=graph::vertex_value(dagGraph, ip);
                                     std::u16string ipvStr(ipv.start, ipv.stop);
-                                    if(pv.token==sylvanmats::antlr4::parse::ID){
+                                    if(ipv.token==sylvanmats::antlr4::parse::ID){
                                     std::cout<<"push to "<<cv.to_bytes(ipvStr)<<std::endl;
                                     currentMode.push_back(ipvStr);
                                     }
@@ -321,7 +333,7 @@ namespace sylvanmats::dsl{
                     }
                 }
                 else if(vp.token==sylvanmats::antlr4::parse::POP_MODE){
-                    if(!currentMode.empty())currentMode.pop_back();
+                    //if(!currentMode.empty())currentMode.pop_back();
                 }
                 break;
             }
