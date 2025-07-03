@@ -108,15 +108,16 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
 //         std::cout<<"tokens "<<v.size()<<std::endl;
         for (int i= 0; i < v.size(); ++i){
             std::string iA=std::get<0>(v[i]);
-            std::string eA=std::get<1>(v[i]);
+            std::string mA=(!std::get<1>(v[i]).empty())? "mode=="+std::get<1>(v[i])+" && " : "mode==DEFAULT && ";
             std::string tA=std::get<2>(v[i]);
             auto fArg=fmt::arg("function", iA);
+            auto mArg=fmt::arg("mode", mA);
             auto tArg=fmt::arg("token", tA);
             //auto eArg=fmt::arg("expression", eA);
             if(i==0)
-                fmt::vformat_to(ctx.out(), "{indent}if({function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, tArg));
+                fmt::vformat_to(ctx.out(), "{indent}if({mode}{function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
             else
-                fmt::vformat_to(ctx.out(), "{indent}}}else if({function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, tArg));
+                fmt::vformat_to(ctx.out(), "{indent}}}else if({mode}{function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
         }
         if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}}}else{{it++;}}\ntemp=it;}}\n", fmt::make_format_args(iArg));
         else return fmt::format_to(ctx.out(), "");
@@ -241,8 +242,9 @@ namespace sylvanmats::publishing{
         T parserGrammarTemplate{};
         T parserClass{};
         std::vector<T> tokens;
+        std::vector<T> modes{"DEFAULT", "Options", "Tokens", "Channels"};
         std::vector<std::tuple<T, T>> lexerRuleClasses;
-         std::vector<std::tuple<std::string, std::string, std::string, bool>> ladderRules;
+        std::vector<std::tuple<std::string, std::string, std::string, bool>> ladderRules;
         std::vector<std::tuple<T, T, T>> parserRuleClasses;
         T primaryParserRule{};;
 
@@ -275,11 +277,13 @@ namespace sylvanmats::publishing{
             if(!tokenVocabInstance.empty())tokenVocabInstance.at(0)=std::tolower(tokenVocabInstance.at(0));
             auto tliiArg=fmt::arg("token_vocab_instance", tokenVocabInstance);
             auto tArg=fmt::arg("tokens", tokens);
+            auto mArg=fmt::arg("modes", modes);
+            std::cout<<"total modes#:  "<<modes.size()<<std::endl;
             auto lrArg=fmt::arg("lexer_rules", lexerRuleClasses);
             auto prArg=fmt::arg("parser_rules", parserRuleClasses);
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
             auto pprArg=fmt::arg("primary_parser_rule", primaryParserRule);
-              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, lrArg, prArg, rlArg, pprArg));
+              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, mArg, lrArg, prArg, rlArg, pprArg));
               return ret;
           };
 
@@ -292,6 +296,7 @@ namespace sylvanmats::publishing{
         void appendToken(T t){tokens.push_back(t);};
         void appendLexerRuleClass(T t, T mode, T token, bool frag, bool skip    , T expr){
             lexerRuleClasses.push_back(std::make_tuple(t, expr));
+            if(!mode.empty() && std::none_of(modes.begin(), modes.end(), [&mode](std::string& s){return s.compare(mode)==0;}))modes.push_back(mode);
             if(!frag && !skip)ladderRules.push_back(std::make_tuple(t, mode, token, true));
         };
         void appendParserRuleClass(T t, T mode, T token, bool frag, bool skip, T expr){
