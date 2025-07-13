@@ -173,7 +173,8 @@ namespace sylvanmats::antlr4::parse {
                         ++it;
                         vertices.back().stop=&(*it);
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
-                        associates.push(vertices.size()-1);
+                        //associates.push(vertices.size()-1);
+                        while(associates.size()>1)associates.pop();
                         break;
                     }
                     else ++it;

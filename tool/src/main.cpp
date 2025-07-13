@@ -38,6 +38,7 @@ int main(int argc, char** argv, char **envp) {
         CLI11_PARSE(app, argc, argv);
 
         namespaceName+=(out) ? outDirectory.filename().string(): "parse";
+        sylvanmats::publishing::CodeGenerator<std::string> lexerGenerator(namespaceName);
         if(positional.size()>1){
             if(!std::filesystem::exists(outDirectory))std::filesystem::create_directories(outDirectory);
             std::filesystem::path filePath=positional.front();
@@ -46,23 +47,11 @@ int main(int argc, char** argv, char **envp) {
             if(filePath.has_parent_path())
                 directory=filePath.parent_path();
             sylvanmats::antlr4::parse::G4Reader g4Reader;
-            g4Reader(filePath, [&namespaceName, &directory, &outDirectory, &graphit](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
-                sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(namespaceName);
-                sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
+            g4Reader(filePath, [&lexerGenerator, &directory, &outDirectory, &graphit](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
+                sylvanmats::dsl::Morpher morpher(directory, lexerGenerator);
                 morpher(utf16, dagGraph);
-                codeGenerator.appendToken("LEXER_ENDOFFILE");
-                std::string&& content=codeGenerator();
-                std::ofstream os(outDirectory.string()+"/"+codeGenerator.getParserClass()+".h");
-                std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
-                os.close();
-                if(graphit){
-                    sylanmats::io::tikz::G4GraphPublisher<sylvanmats::antlr4::parse::G> g4GraphPublisher;
-                    std::string tikzContent=g4GraphPublisher(utf16, dagGraph);
-                    std::ofstream osTokz("./"+codeGenerator.getParserClass()+".tex");
-                    std::copy(tikzContent.begin(), tikzContent.end(), std::ostreambuf_iterator<char>(osTokz));
-                    osTokz.close();
-                }
-            });
+                lexerGenerator.appendToken("LEXER_ENDOFFILE");
+             });
             }
             else std::cout<<filePath<<" does not exist"<<std::endl;
         }
@@ -73,7 +62,7 @@ int main(int argc, char** argv, char **envp) {
             if(stFilePath.has_parent_path())
                 directory=stFilePath.parent_path();
             sylvanmats::antlr4::parse::G4Reader g4PReader;
-            g4PReader(stFilePath, [&namespaceName, &directory, &outDirectory, &graphit](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
+            g4PReader(stFilePath, [&lexerGenerator, &namespaceName, &directory, &outDirectory, &graphit](std::u16string& utf16, std::unordered_map<std::u16string, std::u16string>& options, sylvanmats::antlr4::parse::G& dagGraph){
                 sylvanmats::publishing::CodeGenerator<std::string> codeGenerator(namespaceName);
                 std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
                 if(options.count(u"tokenVocab")){
@@ -82,6 +71,10 @@ int main(int argc, char** argv, char **envp) {
                 }
                 sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
                 morpher(utf16, dagGraph);
+                for(std::vector<std::tuple<std::u16string, std::u16string, std::u16string>>::iterator it=morpher.getImplicits().begin();it!=morpher.getImplicits().end();it++){
+                    lexerGenerator.appendLexerRuleClass(utf16conv.to_bytes(std::get<0>(*it)), "", utf16conv.to_bytes(std::get<1>(*it)), false, false, utf16conv.to_bytes(std::get<2>(*it)));
+                    lexerGenerator.appendToken(utf16conv.to_bytes(std::get<1>(*it)));
+                }
                 std::string&& content=codeGenerator();
                 std::ofstream os(outDirectory.string()+"/"+codeGenerator.getParserClass()+".h");
                 std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
@@ -98,6 +91,20 @@ int main(int argc, char** argv, char **envp) {
             }
             else std::cout<<stFilePath<<" does not exist"<<std::endl;
         }
+        if(positional.size()>1){
+            std::string&& content=lexerGenerator();
+            std::ofstream os(outDirectory.string()+"/"+lexerGenerator.getParserClass()+".h");
+            std::copy(content.begin(), content.end(), std::ostreambuf_iterator<char>(os));
+            os.close();
+            // if(graphit){
+            //     sylanmats::io::tikz::G4GraphPublisher<sylvanmats::antlr4::parse::G> g4GraphPublisher;
+            //     std::string tikzContent=g4GraphPublisher(utf16, dagGraph);
+            //     std::ofstream osTokz("./"+lexerGenerator.getParserClass()+".tex");
+            //     std::copy(tikzContent.begin(), tikzContent.end(), std::ostreambuf_iterator<char>(osTokz));
+            //     osTokz.close();
+            // }
+        }
+
     }
     catch(std::filesystem::filesystem_error &e) {
         std::cout<<"what? "<<e.what() << std::endl;

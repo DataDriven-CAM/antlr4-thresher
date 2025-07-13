@@ -294,10 +294,10 @@ namespace sylvanmats::publishing{
         T& getTokenVocab(){return tokenVocab;};
         void setTokenPrefix(T tokenPrefix){this->tokenPrefix=tokenPrefix;};
         void appendToken(T t){tokens.push_back(t);};
-        void appendLexerRuleClass(T t, T mode, T token, bool frag, bool skip    , T expr){
+        void appendLexerRuleClass(T t, T mode, T token, bool frag, bool skip , T expr){
             lexerRuleClasses.push_back(std::make_tuple(t, expr));
             if(!mode.empty() && std::none_of(modes.begin(), modes.end(), [&mode](std::string& s){return s.compare(mode)==0;}))modes.push_back(mode);
-            if(!frag && !skip)ladderRules.push_back(std::make_tuple(t, mode, token, true));
+            if(!frag)ladderRules.push_back(std::make_tuple(t, mode, token, true));
         };
         void appendParserRuleClass(T t, T mode, T token, bool frag, bool skip, T expr){
             if(primaryParserRule.empty())primaryParserRule=t;
