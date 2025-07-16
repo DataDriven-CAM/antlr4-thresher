@@ -28,3 +28,5 @@ cantlrtool --help
 
 ```
 default namespace "sylvanmats::antlr4::parse"
+
+Note: implicit literals in parser rules are not supported

@@ -47,7 +47,9 @@ namespace {namespace} {{
         std::vector<ast_node> vertices;
         std::vector<std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>> edges;
         MODE mode = DEFAULT;
-        std::vector<MODE> currentMode{{{{mode}}}};
+        MODE nextMode = DEFAULT;
+        bool poppable=false;
+         std::vector<MODE> currentMode{{{{mode}}}};
         
         {token_vocab_class} {token_vocab_instance};
     
@@ -97,6 +99,7 @@ namespace {namespace} {{
         if(currentMode.size()>1){{
             currentMode.pop_back();
             mode=currentMode.back();
+            poppable=false;
         }}
     }};
 

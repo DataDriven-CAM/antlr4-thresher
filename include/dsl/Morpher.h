@@ -20,8 +20,6 @@ namespace sylvanmats::dsl{
         std::u16string lexerInstance{};
         std::u16string tokenPrefix=u"LEXER_";
         std::u16string tempInc=u"temp++";
-        std::vector<std::tuple<std::u16string, std::u16string, std::u16string>> implicits;
-        size_t implicitCount=1;
     public:
         Morpher() = delete;
         Morpher(std::filesystem::path& directory, sylvanmats::publishing::CodeGenerator<std::string>& codeGenerator);
@@ -29,8 +27,6 @@ namespace sylvanmats::dsl{
         virtual ~Morpher() = default;
         
         void operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph);
-
-        std::vector<std::tuple<std::u16string, std::u16string, std::u16string>>& getImplicits(){return implicits;};
 
     private:
         bool skip=false;
