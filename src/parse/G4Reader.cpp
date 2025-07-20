@@ -292,8 +292,15 @@ namespace sylvanmats::antlr4::parse {
                 }
 
             }
-            else if(std::u16ncmp(&(*it), u"skip", 4)==0 || std::u16ncmp(&(*it), u"more", 4)==0){
+            else if(std::u16ncmp(&(*it), u"skip", 4)==0 ){
                 vertices.push_back({.start=&(*it), .token=SKIP});
+                std::advance(it, 4);
+                vertices.back().stop=&(*it);
+                edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
+                //associates.push(vertices.size()-1);
+            }
+            else if(std::u16ncmp(&(*it), u"more", 4)==0){
+                vertices.push_back({.start=&(*it), .token=MORE});
                 std::advance(it, 4);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));

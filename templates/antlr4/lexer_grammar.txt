@@ -48,8 +48,11 @@ namespace {namespace} {{
         std::vector<std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>> edges;
         MODE mode = DEFAULT;
         MODE nextMode = DEFAULT;
+        bool pushable=false;
         bool poppable=false;
-         std::vector<MODE> currentMode{{{{mode}}}};
+        bool skippable=false;
+        std::vector<MODE> currentMode{{{{mode}}}};
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         
         {token_vocab_class} {token_vocab_instance};
     
