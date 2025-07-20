@@ -15,6 +15,7 @@ namespace sylvanmats::antlr4::parse {
         TOKENS,
         CHANNELS,
         SKIP,
+        MORE,
         IMPORT,
         LEXER,
         PARSER,
