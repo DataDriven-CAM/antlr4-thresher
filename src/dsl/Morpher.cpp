@@ -159,9 +159,10 @@ namespace sylvanmats::dsl{
                 if(expr2.compare(u"EOF")==0)expr2=u"EndOfFile";
                 if(vm.token!=sylvanmats::antlr4::parse::COLON && vm.token!=sylvanmats::antlr4::parse::PIPE && vm.token!=sylvanmats::antlr4::parse::LPAREN && vm.token!=sylvanmats::antlr4::parse::NOT && vm.token!=sylvanmats::antlr4::parse::ROOT)expr.back()+=u" && ";
                 else if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr.back()+=u" && ";
-                if(vp.token==sylvanmats::antlr4::parse::PLUS){expr.push_back(std::u16string{});expr.back()+=u"[&]()->bool{bool ret=false;while(";}
-                else if(vp.token==sylvanmats::antlr4::parse::STAR){expr.push_back(std::u16string{});expr.back()+=u"[&]()->bool{bool ret=true;while(";}
-                else {expr.push_back(std::u16string{});expr.back()+=u"[&]()->bool{bool ret=false;if(";}
+                if(vp.token==sylvanmats::antlr4::parse::PLUS){expr.push_back(std::u16string{});expr.back()+=u"[&]()->bool{"+orReset+u"bool ret=false;while(";}
+                else if(vp.token==sylvanmats::antlr4::parse::STAR){expr.push_back(std::u16string{});expr.back()+=u"[&]()->bool{"+orReset+u"bool ret=true;while(";}
+                else {expr.push_back(std::u16string{});expr.back()+=u"[&]()->bool{"+orReset+u"bool ret=false;if(";}
+                orReset=u"";
                 if(!lexerInstance.empty()){
                     if(std::isupper(expr2.at(0))){
                         std::transform(expr2.cbegin(), expr2.cend(), expr2.begin(), [](const char16_t& c){return std::toupper(c);});
@@ -192,17 +193,18 @@ namespace sylvanmats::dsl{
                 auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
                 auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
                 if(vp.token==sylvanmats::antlr4::parse::PLUS){
-                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;while("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
+                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{"+orReset+u"bool ret=false;while("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
                 }
                 else if(vp.token==sylvanmats::antlr4::parse::STAR){
                  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
              std::u16string vmStr(vm.start, vm.stop);
                     std::cout<<expr.size()<<" RPAREN STAR "<<cv.to_bytes(vmStr)<<std::endl;
-                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=true;while("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
+                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{"+orReset+u"bool ret=true;while("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
                 }
                 else {
-                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{bool ret=false;if("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
+                    if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{"+orReset+u"bool ret=false;if("+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
                 }
+                orReset=u"";
             }
             else if(vv.token==sylvanmats::antlr4::parse::LBRACK){
                 std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
@@ -224,10 +226,11 @@ namespace sylvanmats::dsl{
                 else if(vm.token==sylvanmats::antlr4::parse::RPAREN)expr.back()+=u" && ";
                 else if(vm.token==sylvanmats::antlr4::parse::RBRACK)expr.back()+=u" && ";
                 else if(vm.token==sylvanmats::antlr4::parse::STRING_LITERAL)expr.back()+=u" && ";
-                if(vp.token==sylvanmats::antlr4::parse::PLUS)expr.back()+=u"[&]()->bool{bool ret=false;while(";
-                else if(vp.token==sylvanmats::antlr4::parse::STAR)expr.back()+=u"[&]()->bool{bool ret=true;while(";
-                else if(vp.token==sylvanmats::antlr4::parse::QUESTION)expr.back()+=u"[&]()->bool{bool ret=";
-                else expr.back()+=u"[&]()->bool{bool ret=(";
+                if(vp.token==sylvanmats::antlr4::parse::PLUS)expr.back()+=u"[&]()->bool{"+orReset+u"bool ret=false;while(";
+                else if(vp.token==sylvanmats::antlr4::parse::STAR)expr.back()+=u"[&]()->bool{"+orReset+u"bool ret=true;while(";
+                else if(vp.token==sylvanmats::antlr4::parse::QUESTION)expr.back()+=u"[&]()->bool{"+orReset+u"bool ret=";
+                else expr.back()+=u"[&]()->bool{"+orReset+u"bool ret=(";
+                orReset=u"";
                 if(vm.token==sylvanmats::antlr4::parse::NOT)expr.back()+=u"!(";
                 // std::u16string innerStr(vm.start, vp.stop);
                 // sylvanmats::antlr4::parse::LineColumnFinder lineColumnFinder;
@@ -295,6 +298,7 @@ namespace sylvanmats::dsl{
                 //std::cout<<" rbrack "<<std::endl;
             }
             else if(vv.token==sylvanmats::antlr4::parse::PIPE){
+                if(!lexerInstance.empty())orReset=u"s=source;";
                 expr.back()+=u" || ";
             }
             else if(vv.token==sylvanmats::antlr4::parse::NOT){
@@ -382,7 +386,7 @@ namespace sylvanmats::dsl{
                         expr3+=u"[&]()->bool{if((*temp)<'\\u"+upperDigitCode+u"' || ((*temp)=='\\u"+upperDigitCode+u"' && (*(temp+1))<='\\u"+lowerDigitCode+u"')){temp+=2;return true;}else return false;}()";
                     }
                     else
-                        expr3+=u"[&]()->bool{ibool ret=((*temp)=='\\u"+upperDigitCode+u"' && (*(temp+1))=='\\u"+lowerDigitCode+u"')? true:false;if(ret{temp+=2;return true;}else return false;}()";
+                        expr3+=u"[&]()->bool{"+orReset+u"bool ret=((*temp)=='\\u"+upperDigitCode+u"' && (*(temp+1))=='\\u"+lowerDigitCode+u"')? true:false;if(ret{temp+=2;return true;}else return false;}()";
                 }
                 else if(expr2.size()==3 || (expr2.size()==4 && expr2.at(1)==u'\\') || (expr2.size()==8 && expr2.at(1)==u'\\' && expr2.at(2)==u'u')){
                     //std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
@@ -432,6 +436,7 @@ namespace sylvanmats::dsl{
                 }
                 if(lexerInstance.empty()){
                     expr.back()+=expr3;
+                    orReset=u"";
                 }
                 else {
                     //std::string implicitStr="IMPLICIT"+std::to_string(implicitCount);
