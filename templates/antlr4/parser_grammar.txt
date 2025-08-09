@@ -72,13 +72,6 @@ namespace {namespace} {{
             std::cout<<{primary_parser_rule}(ldagGraph, o)<<std::endl;
         }}
 {rules_ladder}
-        /*std::cout<<"vertices "<<vertices.size()<<" "<<edges.size()<<std::endl;
-        for(std::vector<parser_node>::iterator it=vertices.begin();it!=vertices.end();it++){{
-            auto& nv=graph::vertex_value(ldagGraph, ldagGraph[(*it).id]);
-            std::u16string label{{}};
-            label.assign(nv.start, nv.stop);
-            std::cout<<" "<<(*it).parser_token<<" "<<(*it).token<<" "<<(*it).id<<" "<<(cv.to_bytes(label))<<std::endl;
-        }}*/
             std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& a, std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& b){{if(std::get<0>(a)!=std::get<0>(b)){{return std::get<0>(a)<std::get<0>(b);}} return std::get<1>(a)<std::get<1>(b);}});
             using value = std::ranges::range_value_t<decltype(edges)>;
             graph::vertex_id_t<PG> N = static_cast<graph::vertex_id_t<PG>>(size(graph::vertices(this->dagGraph)));
