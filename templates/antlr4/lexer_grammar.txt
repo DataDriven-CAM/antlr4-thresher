@@ -35,14 +35,15 @@ namespace {namespace} {{
     struct ast_node{{
       const char16_t* start;
       const char16_t* stop;
-      LEXER_TOKEN token;
+      LEXER_TOKEN token_start;
+      LEXER_TOKEN token_end=LEXER_ROOT;
       MODE mode=MODE::DEFAULT;
     }};
 
 
     using LG = graph::container::compressed_graph<int, ast_node>;
 
-    class {class}{{
+    class {class} {super_class}{{
     protected:
         LG dagGraph;
         std::vector<ast_node> vertices;
@@ -76,7 +77,7 @@ namespace {namespace} {{
         itEnd=utf16.end();
         std::u16string::const_iterator temp=it;
         associates.push(vertices.size());
-        vertices.push_back({{.start=&(*it), .stop=&(*it), .token=LEXER_ROOT}});
+        vertices.push_back({{.start=&(*it), .stop=&(*it), .token_start=LEXER_ROOT}});
 {rules_ladder}
             std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>& a, std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>& b){{if(std::get<0>(a)!=std::get<0>(b)){{return std::get<0>(a)<std::get<0>(b);}} return std::get<1>(a)<std::get<1>(b);}});
             using value = std::ranges::range_value_t<decltype(edges)>;

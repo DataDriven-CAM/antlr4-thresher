@@ -30,7 +30,8 @@ namespace {namespace} {{
 
     struct parser_node{{
       PARSER_TOKEN parser_token;
-      LEXER_TOKEN token;
+      LEXER_TOKEN token_start;
+      LEXER_TOKEN token_end=LEXER_ROOT;
       size_t id;
       MODE mode=MODE::DEFAULT;
     }};
@@ -38,7 +39,7 @@ namespace {namespace} {{
 
     using PG = graph::container::compressed_graph<int, parser_node>;
 
-    class {class}{{
+    class {class} {super_class}{{
     protected:
         PG dagGraph;
         std::vector<parser_node> vertices;
@@ -61,7 +62,7 @@ namespace {namespace} {{
     void operator()(std::u16string& utf16, std::function<void(LG& ldagGraph, PG& dagGraph)> apply){{
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         associates.push(vertices.size());
-        vertices.push_back({{.parser_token=PARSER_ROOT, .token=LEXER_ROOT, .id=0}});
+        vertices.push_back({{.parser_token=PARSER_ROOT, .token_start=LEXER_ROOT, .id=0}});
         {token_vocab_instance}(utf16, [&](LG& ldagGraph){{
         int     status;
         std::cout<<"ldagGraph "<<graph::num_vertices(ldagGraph)<<" "<<graph::num_edges(ldagGraph)<<std::endl;

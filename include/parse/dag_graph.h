@@ -76,7 +76,8 @@ namespace sylvanmats::antlr4::parse {
     struct ast_node{
       const char16_t* start;
       const char16_t* stop;
-      TOKEN token;
+      TOKEN token_start;
+      TOKEN token_end;
       PARSE_MODE mode=PARSE_MODE::DEFAULT;
       bool frag=false;
       bool skip=false;

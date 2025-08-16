@@ -85,7 +85,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
             auto psArg=fmt::arg("parser_token", ps);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, graph::container::csr_row<unsigned int>&)> {function} = [&](LG& ldagGraph, graph::container::csr_row<unsigned int>& source) {{\n{indent}    graph::container::csr_row<unsigned int> s=source;graph::container::csr_row<unsigned int> sNext=source; bool ret={expression}; if(ret){{vertices.push_back({{.parser_token=PARSER_{parser_token}, .token=graph::vertex_value(ldagGraph, ldagGraph[source.index]).token, .id=source.index}});if(vertices.size()>1)edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));source=s;/*std::cout<<\"{function} \"<<source.index<<\" \"<<(graph::vertex_value(ldagGraph, ldagGraph[source.index]).token)<<std::endl;*/}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, graph::container::csr_row<unsigned int>&)> {function} = [&](LG& ldagGraph, graph::container::csr_row<unsigned int>& source) {{\n{indent}    graph::container::csr_row<unsigned int> s=source;graph::container::csr_row<unsigned int> sNext=source; bool ret={expression}; if(ret){{vertices.push_back({{.parser_token=PARSER_{parser_token}, .token_start=graph::vertex_value(ldagGraph, ldagGraph[source.index]).token_start, .id=source.index}});if(vertices.size()>1)edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));source=s;/*std::cout<<\"{function} \"<<source.index<<\" \"<<(graph::vertex_value(ldagGraph, ldagGraph[source.index]).token_start)<<std::endl;*/}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -117,9 +117,9 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             // if(i==0)
                 fmt::vformat_to(ctx.out(), "{indent}nextMode=mode;pushable=false;poppable=false;skippable=false;\n{indent}if(std::u16string::const_iterator itTry=it;{mode}{function}(itTry) && std::distance(temp, winningIt)<std::distance(temp, itTry)){{\n{indent}   hitToken=true;winningToken={token};winningIt=itTry;winningMode=nextMode;winningPushable=pushable;winningPoppable=poppable;winningSkippable=skippable;\n{indent}}}\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
             // else
-            //     fmt::vformat_to(ctx.out(), "{indent}}}else if({mode}{function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
+            //     fmt::vformat_to(ctx.out(), "{indent}}}else if({mode}{function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token_start={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
         }
-        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<winningMode<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.start=&(*temp), .stop=&(*winningIt), .token=winningToken}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    it=winningIt;\n{indent}    if(winningPushable)pushMode(winningMode);if(winningPoppable)popMode();count++;\n{indent}}}else{{it++;}}\n{indent}    if(std::distance(it, itEnd)==1)it++;temp=it;\n{indent}}}\n", fmt::make_format_args(iArg));
+        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<winningMode<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.start=&(*temp), .stop=&(*winningIt), .token_start=winningToken}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    it=winningIt;\n{indent}    if(winningPushable)pushMode(winningMode);if(winningPoppable)popMode();count++;\n{indent}}}else{{it++;}}\n{indent}    if(std::distance(it, itEnd)==1)it++;temp=it;\n{indent}}}\n", fmt::make_format_args(iArg));
         else return fmt::format_to(ctx.out(), "");
 //        if(curly){
 //            constexpr char* fmt={"}}"};
@@ -237,6 +237,7 @@ namespace sylvanmats::publishing{
         std::string ns;
         T blockComment{};
         T tokenVocab{};
+        T superClass{};
         T tokenPrefix="LEXER_";
         T lexerGrammarTemplate{};
         T parserGrammarTemplate{};
@@ -271,6 +272,8 @@ namespace sylvanmats::publishing{
             //T ns="code";
             auto nsArg=fmt::arg("namespace", ns);
             T lexerInclude=(!tokenVocab.empty())? "#include \""+tokenVocab+".h\"": "";
+            T superPublicClass=(!superClass.empty())? ": public "+superClass: "";
+            auto csArg=fmt::arg("super_class", superPublicClass);
             auto tliArg=fmt::arg("token_vocab_include", lexerInclude);
             auto tlcArg=fmt::arg("token_vocab_class", tokenVocab);
             T tokenVocabInstance=tokenVocab;
@@ -283,7 +286,7 @@ namespace sylvanmats::publishing{
             auto prArg=fmt::arg("parser_rules", parserRuleClasses);
             auto rlArg=fmt::arg("rules_ladder", ladderRules);
             auto pprArg=fmt::arg("primary_parser_rule", primaryParserRule);
-              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, tlcArg, tliiArg, tArg, mArg, lrArg, prArg, rlArg, pprArg));
+              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, csArg, tlcArg, tliiArg, tArg, mArg, lrArg, prArg, rlArg, pprArg));
               return ret;
           };
 
@@ -292,6 +295,8 @@ namespace sylvanmats::publishing{
         T& getParserClass(){return parserClass;};
         void setTokenVocab(T tokenVocab){this->tokenVocab=tokenVocab;};
         T& getTokenVocab(){return tokenVocab;};
+        void setSuperClass(T superClass){this->superClass=superClass;};
+        T& getSuperClass(){return superClass;};
         void setTokenPrefix(T tokenPrefix){this->tokenPrefix=tokenPrefix;};
         void appendToken(T t){tokens.push_back(t);};
         void appendLexerRuleClass(T t, T mode, T token, bool frag , T expr){

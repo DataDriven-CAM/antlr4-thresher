@@ -20,7 +20,6 @@
 
 int main(int argc, char** argv, char **envp) {
     try{
-        std::string home=(std::getenv("HOME")!=nullptr) ? std::getenv("HOME") : "c:/Users/Roger";
         std::string cantlrHome=(std::getenv("CANTLR_HOME")!=nullptr) ?std::getenv("CANTLR_HOME") : ".";
         CLI::App app{"C++ parser generator"};
         std::vector<std::string> positional;
@@ -35,7 +34,12 @@ int main(int argc, char** argv, char **envp) {
         app.add_option("--ns,--namespace", namespaceName, "namespace name");
         CLI::Option* out=app.add_option("-o,--out", outDirectory, "output directory");
         app.add_flag("-g,--graph", graphit, "Graph the rules'");
-        CLI11_PARSE(app, argc, argv);
+        app.set_config("--config", cantlrHome+"/config.toml", "Read a toml file");
+        CLI::App &bracketry = *app.add_subcommand("brackets", "Brackets in config file");
+        bracketry.add_option("angle", angleBrackets, "angle brackets");
+        bracketry.add_option("brace", braceBrackets, "brace brackets");
+        bracketry.add_option("parenthese", parentheseBrackets, "parenthese brackets");
+       CLI11_PARSE(app, argc, argv);
 
         namespaceName+=(out) ? outDirectory.filename().string(): "parse";
         if(positional.size()>1){
@@ -79,6 +83,11 @@ int main(int argc, char** argv, char **envp) {
                 if(options.count(u"tokenVocab")){
                     //std::cout<<"toml "<<utf16conv.to_bytes(options[u"tokenVocab"])<<" "<<codeGenerator.getParserClass()<<std::endl;
                     codeGenerator.setTokenVocab(utf16conv.to_bytes(options[u"tokenVocab"]));
+                }
+                if(options.count(u"superClass")){
+                    std::cout<<"toml "<<utf16conv.to_bytes(options[u"superClass"])<<" "<<codeGenerator.getParserClass()<<std::endl;
+                    codeGenerator.setSuperClass(utf16conv.to_bytes(options[u"superClass"]));
+
                 }
                 sylvanmats::dsl::Morpher morpher(directory, codeGenerator);
                 morpher(utf16, dagGraph);

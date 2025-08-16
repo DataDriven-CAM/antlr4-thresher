@@ -47,7 +47,7 @@ namespace sylvanmats::antlr4::parse {
             std::u16string::const_iterator it = utf16.begin();
             int count=0;
             associates.push(vertices.size());
-            vertices.push_back({.start=&(*it), .stop=&(*it), .token=ROOT});
+            vertices.push_back({.start=&(*it), .stop=&(*it), .token_start=ROOT});
             itEnd=utf16.end();
             std::u16string::const_iterator temp=it;
             while(it!=utf16.end()){
@@ -59,7 +59,7 @@ namespace sylvanmats::antlr4::parse {
                 //std::cout<<"DocComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
             else if(BlockComment(it)){
-                /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LINE_COMMENT});
+                /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=LINE_COMMENT});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
                 bool hit=false;
@@ -69,7 +69,7 @@ namespace sylvanmats::antlr4::parse {
                 //std::cout<<"BlockComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
             else if(LineComment(it)){
-                /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LINE_COMMENT});
+                /*vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=LINE_COMMENT});
                 if(depth>=depthProfile.size())depthProfile.push_back(std::vector<size_t>{});
                 depthProfile[depth].push_back(vertices.size()-1);
                 bool hit=false;
@@ -80,10 +80,10 @@ namespace sylvanmats::antlr4::parse {
                 //std::cout<<"LineComment size: "<<(vertices.back().stop-vertices.back().start)<<" "<<cv.to_bytes(label)<<std::endl;
             }
             else if((*it)==u'0' || ((*it)>=u'1' && (*it)<=u'9')){
-                vertices.push_back({.start=&(*it), .token=INT});
+                vertices.push_back({.start=&(*it), .token_start=INT});
                 //lemon::ListGraph::Node n=astGraph.addNode();
                 //astNode[n].start=&(*it);
-                //astNode[n].token=INT;
+                //astNode[n].token_start=INT;
                 ++it;
                 bool hitStop=false;
                 while(!hitStop && it!=utf16.end()){
@@ -114,7 +114,7 @@ namespace sylvanmats::antlr4::parse {
                 }
                 return false;
             }()){
-                vertices.push_back({.start=&(*it), .token=STRING_LITERAL});
+                vertices.push_back({.start=&(*it), .token_start=STRING_LITERAL});
                 it=temp;
                 vertices.back().stop=&(*it);
                     //std::u16string label(vertices.back().start, vertices.back().stop);
@@ -122,7 +122,7 @@ namespace sylvanmats::antlr4::parse {
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(std::u16ncmp(&(*it), u"options", 7)==0){
-                vertices.push_back({.start=&(*it), .token=OPTIONS, .mode=Options});
+                vertices.push_back({.start=&(*it), .token_start=OPTIONS, .mode=Options});
                 std::advance(it, 7);
                 vertices.back().stop=&(*it);
                 while(it!=utf16.end()){
@@ -133,7 +133,7 @@ namespace sylvanmats::antlr4::parse {
                     else if(LineComment(it)){
                     }
                     else if((*it)==u'{'){
-                        vertices.push_back({.start=&(*it), .token=OPT_LBRACE, .mode=Options});
+                        vertices.push_back({.start=&(*it), .token_start=OPT_LBRACE, .mode=Options});
                         ++it;
                         temp=it;
                         vertices.back().stop=&(*it);
@@ -142,7 +142,7 @@ namespace sylvanmats::antlr4::parse {
                         while(it!=utf16.end() && (*it)!=u'}'){
                             it++;
                         }
-                        vertices.push_back({.start=&(*temp), .stop=&(*it), .token=ARGUMENT});
+                        vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=ARGUMENT});
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                         associates.pop();
                         std::u16string arg(vertices.back().start, vertices.back().stop);
@@ -169,7 +169,7 @@ namespace sylvanmats::antlr4::parse {
                             }
                             options[v]=p;
                         }                        
-                        vertices.push_back({.start=&(*it), .token=OPT_RBRACE});
+                        vertices.push_back({.start=&(*it), .token_start=OPT_RBRACE});
                         ++it;
                         vertices.back().stop=&(*it);
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -182,7 +182,7 @@ namespace sylvanmats::antlr4::parse {
                 }
             }
             else if(std::u16ncmp(&(*it), u"tokens", 6)==0){
-                vertices.push_back({.start=&(*it), .token=TOKENS, .mode=Tokens});
+                vertices.push_back({.start=&(*it), .token_start=TOKENS, .mode=Tokens});
                 std::advance(it, 6);
                 vertices.back().stop=&(*it);
                 while(it!=utf16.end()){
@@ -194,7 +194,7 @@ namespace sylvanmats::antlr4::parse {
                     }
                     else if((*it)==u'{'){
                         associates.push(vertices.size());
-                        vertices.push_back({.start=&(*it), .token=TOK_LBRACE, .mode=Tokens});
+                        vertices.push_back({.start=&(*it), .token_start=TOK_LBRACE, .mode=Tokens});
                         ++it;
                         temp=it;
                         vertices.back().stop=&(*it);
@@ -202,7 +202,7 @@ namespace sylvanmats::antlr4::parse {
                         while(it!=utf16.end() && (*it)!=u'}'){
                             it++;
                         }
-                        vertices.push_back({.start=&(*temp), .stop=&(*it), .token=ARGUMENT});
+                        vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=ARGUMENT});
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                         std::u16string arg(vertices.back().start, vertices.back().stop);
                         std::u16string delim=u",";
@@ -215,7 +215,7 @@ namespace sylvanmats::antlr4::parse {
                             // std::cout<<"token: "<<cv.to_bytes(w)<<std::endl;
                             tokens.push_back(w  );
                         }                        
-                        vertices.push_back({.start=&(*it), .token=TOK_RBRACE});
+                        vertices.push_back({.start=&(*it), .token_start=TOK_RBRACE});
                         ++it;
                         vertices.back().stop=&(*it);
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -228,7 +228,7 @@ namespace sylvanmats::antlr4::parse {
 
             }
             else if(std::u16ncmp(&(*it), u"channels", 8)==0){
-                vertices.push_back({.start=&(*it), .token=CHANNELS, .mode=Channels});
+                vertices.push_back({.start=&(*it), .token_start=CHANNELS, .mode=Channels});
                 std::advance(it, 8);
                 vertices.back().stop=&(*it);
                 while(it!=utf16.end()){
@@ -246,14 +246,14 @@ namespace sylvanmats::antlr4::parse {
                     }
                     else if((*it)==u'{'){
                         associates.push(vertices.size());
-                        vertices.push_back({.start=&(*it), .token=CHN_LBRACE, .mode=Channels});
+                        vertices.push_back({.start=&(*it), .token_start=CHN_LBRACE, .mode=Channels});
                         ++it;
                         vertices.back().stop=&(*it);
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                         associates.push(vertices.size()-1);
                     }
                     else if((*it)==u'}'){
-                        vertices.push_back({.start=&(*it), .token=CHN_RBRACE, .mode=Channels});
+                        vertices.push_back({.start=&(*it), .token_start=CHN_RBRACE, .mode=Channels});
                         ++it;
                         vertices.back().stop=&(*it);
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -262,7 +262,7 @@ namespace sylvanmats::antlr4::parse {
                     }
                     else if([&]()->bool{
                         if(NameStartChar(it)){
-                            vertices.push_back({.start=&(*it), .token=CHN_ID, .mode=Channels});
+                            vertices.push_back({.start=&(*it), .token_start=CHN_ID, .mode=Channels});
                             do{
                             ++it;                    
                             }while(NameChar(it));
@@ -277,12 +277,12 @@ namespace sylvanmats::antlr4::parse {
 
                     }
                     else if(Dot(it)){
-                        vertices.push_back({.start=&(*temp), .stop=&(*it), .token=CHN_DOT, .mode=Channels});
+                        vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=CHN_DOT, .mode=Channels});
                         ++it;
                         vertices.back().stop=&(*it);
                     }
                     else if((*it)==u','){
-                        vertices.push_back({.start=&(*it), .token=CHN_COMMA, .mode=Channels});
+                        vertices.push_back({.start=&(*it), .token_start=CHN_COMMA, .mode=Channels});
                        ++it;
                         vertices.back().stop=&(*it);
                         edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -293,42 +293,42 @@ namespace sylvanmats::antlr4::parse {
 
             }
             else if(std::u16ncmp(&(*it), u"skip", 4)==0 ){
-                vertices.push_back({.start=&(*it), .token=SKIP});
+                vertices.push_back({.start=&(*it), .token_start=SKIP});
                 std::advance(it, 4);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 //associates.push(vertices.size()-1);
             }
             else if(std::u16ncmp(&(*it), u"more", 4)==0){
-                vertices.push_back({.start=&(*it), .token=MORE});
+                vertices.push_back({.start=&(*it), .token_start=MORE});
                 std::advance(it, 4);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 //associates.push(vertices.size()-1);
             }
             else if(std::u16ncmp(&(*it), u"import", 6)==0){
-                vertices.push_back({.start=&(*it), .token=IMPORT});
+                vertices.push_back({.start=&(*it), .token_start=IMPORT});
                 std::advance(it, 6);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
                 associates.push(vertices.size()-1);
             }
             else if(std::u16ncmp(&(*it), u"parser", 6)==0){
-                vertices.push_back({.start=&(*it), .token=PARSER});
+                vertices.push_back({.start=&(*it), .token_start=PARSER});
                 std::advance(it, 6);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
                 associates.push(vertices.size()-1);
             }
             else if(std::u16ncmp(&(*it), u"lexer", 5)==0){
-                vertices.push_back({.start=&(*it), .token=LEXER});
+                vertices.push_back({.start=&(*it), .token_start=LEXER});
                 std::advance(it, 5);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
                 associates.push(vertices.size()-1);
             }
             else if(std::u16ncmp(&(*it), u"grammar", 7)==0){
-                vertices.push_back({.start=&(*it), .token=GRAMMAR});
+                vertices.push_back({.start=&(*it), .token_start=GRAMMAR});
                 std::advance(it, 7);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -340,54 +340,54 @@ namespace sylvanmats::antlr4::parse {
             }
             else if(std::u16ncmp(&(*it), u"mode", 4)==0){
                 associates.push(vertices.size());
-                vertices.push_back({.start=&(*it), .token=MODE});
+                vertices.push_back({.start=&(*it), .token_start=MODE});
                 std::advance(it, 4);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(0, vertices.size()-1, 1));
             }
             else if(std::u16ncmp(&(*it), u"type", 4)==0){
-                vertices.push_back({.start=&(*it), .token=TYPE});
+                vertices.push_back({.start=&(*it), .token_start=TYPE});
                 std::advance(it, 4);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(std::u16ncmp(&(*it), u"pushMode", 8)==0){
-                vertices.push_back({.start=&(*it), .token=PUSH_MODE});
+                vertices.push_back({.start=&(*it), .token_start=PUSH_MODE});
                 std::advance(it, 8);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(std::u16ncmp(&(*it), u"popMode", 7)==0){
-                vertices.push_back({.start=&(*it), .token=POP_MODE});
+                vertices.push_back({.start=&(*it), .token_start=POP_MODE});
                 std::advance(it, 7);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(Colon(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=COLON});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=COLON});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 associates.push(vertices.size()-1);
                 //std::cout<<"colon "<<associates.size()<<" "<<associates.top()<<std::endl;
                 fragger=false;
             }
             else if(Semi(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=SEMI});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=SEMI});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 //std::cout<<"semi "<<associates.size()<<" "<<associates.top()<<std::endl;
                 while(associates.size()>1)associates.pop();
             }
             else if(LParen(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LPAREN});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=LPAREN});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 associates.push(vertices.size()-1);
             }
             else if(RParen(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=RPAREN});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=RPAREN});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 associates.pop();
             }
             else if(LBrack(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=LBRACK});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=LBRACK});
                 size_t lIndex=vertices.size()-1;
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 associates.push(vertices.size()-1);
@@ -398,11 +398,11 @@ namespace sylvanmats::antlr4::parse {
                     else it++;
                 }
                 //std::cout<<"dist "<<std::distance(temp, it)<<std::endl;
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=ARGUMENT});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=ARGUMENT});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 temp=it;
                 ++it;
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=RBRACK});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=RBRACK});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 // std::u16string label(vertices[lIndex].start, vertices.back().stop);
                 // std::u16string label2(vertices[associates.top()].start, vertices.back().stop);
@@ -412,7 +412,7 @@ namespace sylvanmats::antlr4::parse {
             else if(RBrack(it)){
             }
             else if((*it)==u'{'){
-                vertices.push_back({.start=&(*it), .token=LBRACE});
+                vertices.push_back({.start=&(*it), .token_start=LBRACE});
                 ++it;
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -420,60 +420,60 @@ namespace sylvanmats::antlr4::parse {
                 while(it!=utf16.end() && (*it)!=u'}'){
                     it++;
                 }
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=ARGUMENT});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=ARGUMENT});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
-                vertices.push_back({.start=&(*it), .token=RBRACE});
+                vertices.push_back({.start=&(*it), .token_start=RBRACE});
                 ++it;
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 associates.pop();
             }
             else if(Pipe(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=PIPE});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=PIPE});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(Star(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=STAR});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=STAR});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(Plus(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=PLUS});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=PLUS});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(Question(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=QUESTION});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=QUESTION});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(Not(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=NOT});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=NOT});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if((*it)==u'\\' && (*(it+1))!=u'\\'){
-                vertices.push_back({.start=&(*it), .token=ESCSEQ});
+                vertices.push_back({.start=&(*it), .token_start=ESCSEQ});
                 ++it;
                 ++it;
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
              }
             else if((*it)==u'\\' && (*(it+1))==u'\\'){
-                vertices.push_back({.start=&(*it), .token=ESC});
+                vertices.push_back({.start=&(*it), .token_start=ESC});
                 ++it;
                 ++it;
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(std::u16ncmp(&(*it), u"..", 2)==0){
-                vertices.push_back({.start=&(*it), .token=RANGE});
+                vertices.push_back({.start=&(*it), .token_start=RANGE});
                 std::advance(it, 2);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(Dot(it)){
-                vertices.push_back({.start=&(*temp), .stop=&(*it), .token=DOT});
+                vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=DOT});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
             }
             else if(std::u16ncmp(&(*it), u"->", 2)==0){
-                vertices.push_back({.start=&(*it), .token=RARROW});
+                vertices.push_back({.start=&(*it), .token_start=RARROW});
                 std::advance(it, 2);
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -481,7 +481,7 @@ namespace sylvanmats::antlr4::parse {
             }
             else if([&]()->bool{
                 if(NameStartChar(it)){
-                    vertices.push_back({.start=&(*it), .token=ID});
+                    vertices.push_back({.start=&(*it), .token_start=ID});
                     do{
                     ++it;                    
                     }while(NameChar(it));

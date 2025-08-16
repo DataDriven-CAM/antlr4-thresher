@@ -40,7 +40,7 @@ namespace sylanmats::io::tikz{
                 }
                 visited[uid]++;
                 auto uValue=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, uid));
-                if(uValue.token==sylvanmats::antlr4::parse::SEMI)continue;
+                if(uValue.token_start==sylvanmats::antlr4::parse::SEMI)continue;
                 std::u16string label{};
                 label.assign(uValue.start, uValue.stop);
                 //if(!label.empty())std::cout<<label.size()<<" label "<<cv.to_bytes(label)<<"|"<<size(graph::edges(dagGraph, uid))<<std::endl;
@@ -67,7 +67,7 @@ namespace sylanmats::io::tikz{
                     tree.append(" -> ");
                     if(depth<dfs.depth() && size(graph::edges(dagGraph, vid))>1 && visited[vid]==0)tree.append("{");
                     tree.append("\"");
-                    if(wValue.token==sylvanmats::antlr4::parse::SEMI){
+                    if(wValue.token_start==sylvanmats::antlr4::parse::SEMI){
                          label.assign(wValue.start, wValue.stop);
                         std::string pairKeyName=cv.to_bytes(label);
                 //std::cout<<"semi "<<pairKeyName<<std::endl;

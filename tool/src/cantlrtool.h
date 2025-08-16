@@ -1,5 +1,9 @@
 #pragma once
 
+static std::string angleBrackets{};
+static std::string braceBrackets{};
+static std::string parentheseBrackets{};
+
 void print_exception(const std::exception& e, int level =  0)
 {
     std::cerr << std::string(level, ' ') << "exception: " << e.what() << '\n';

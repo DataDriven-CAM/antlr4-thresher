@@ -47,5 +47,5 @@ build/tool/src/main.o : ./tool/src/main.cpp
 	$(CXX) $(CXXFLAGS) -o build/tool/src/main.o -c ./tool/src/main.cpp
 
 clean:
-	rm -rf build/src
+	rm -rf build
 
