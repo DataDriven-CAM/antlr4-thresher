@@ -4,7 +4,7 @@ options {
     tokenVocab = MiniLexer;
 }
 
-path : literal;
+path : (literal | additiveexpr)+;
 
 literal : StringLiteral;
 
@@ -12,7 +12,9 @@ additiveexpr
     : multiplicativeexpr ((PLUS | MINUS) multiplicativeexpr)*
     ;
 
-multiplicativeexpr : STAR;
+multiplicativeexpr : minteger (STAR minteger)*;
+
+minteger : IntegerLiteral;
 
 elementtest
     : (elementnameorwildcard ( COMMA typename_ QM?)?)? 

@@ -57,7 +57,7 @@ TEST_CASE("test u16 formatting"){
     //std::arg("tokens", tokens);
     std::string content=std::format(std::runtime_format(" {}\n"), tokens);
     //std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> cv;
-    std::cout<<"content "<<content<<std::endl;
+    // std::cout<<"content "<<content<<std::endl;
     //std::cout<<"content "<<cv.to_bytes(content)<<std::endl;
 }
 
