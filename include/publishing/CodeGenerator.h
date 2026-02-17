@@ -85,7 +85,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
             auto psArg=fmt::arg("parser_token", ps);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, graph::container::csr_row<unsigned int>&)> {function} = [&](LG& ldagGraph, graph::container::csr_row<unsigned int>& source) {{\n{indent}    graph::container::csr_row<unsigned int> s=source;graph::container::csr_row<unsigned int> sNext=source; bool ret={expression}; if(ret){{vertices.push_back({{.parser_token=PARSER_{parser_token}, .token_start=graph::vertex_value(ldagGraph, ldagGraph[source.index]).token_start, .id=source.index}});if(vertices.size()>1)edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));associates.push(vertices.size()-1);source=s;/*std::cout<<\"{function} \"<<source.index<<\" \"<<(graph::vertex_value(ldagGraph, ldagGraph[source.index]).token_start)<<std::endl;*/}}else if(associates.size()>1){{associates.pop();}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, size_t&, size_t)> {function} = [&](LG& ldagGraph, size_t& index, size_t length) {{\n{indent}    size_t lIndex=index;\n{indent}    bool ret={expression}; if(ret){{associates.push(vertices.size()-1);index=lIndex;std::cout<<lIndex<<\" \"<<\"{function} \"<<(graph::vertex_value(ldagGraph, ldagGraph[lIndex]).token_start)<<std::endl;}}else if(associates.size()>1){{associates.pop();}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -120,6 +120,44 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             //     fmt::vformat_to(ctx.out(), "{indent}}}else if({mode}{function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token_start={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
         }
         if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<winningMode<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.start=&(*temp), .stop=&(*winningIt), .token_start=winningToken}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    it=winningIt;\n{indent}    if(winningPushable)pushMode(winningMode);if(winningPoppable)popMode();count++;\n{indent}}}else{{it++;}}\n{indent}    if(std::distance(it, itEnd)==1)it++;temp=it;\n{indent}}}\n", fmt::make_format_args(iArg));
+        else return fmt::format_to(ctx.out(), "");
+//        if(curly){
+//            constexpr char* fmt={"}}"};
+//            return std::format_to(ctx.out(), fmt);
+//        }
+//        else{
+//            constexpr char* fmt={"]"};
+//            return std::format_to(ctx.out(), fmt);
+//        }
+    }
+    // ...
+    bool        curly{false};
+    std::string value_format;
+};
+
+template <>
+struct fmt::formatter<std::vector<std::tuple<std::string, std::string, bool>>>{
+    auto parse(format_parse_context& ctx) -> format_parse_context::iterator{
+        return ctx.begin();
+    }
+    
+     auto format(const std::vector<std::tuple<std::string, std::string, bool>>& v, format_context& ctx) const -> format_context::iterator{
+        std::string indentation(12, ' ');
+            auto iArg=fmt::arg("indent", indentation);
+            if(!v.empty())fmt::vformat_to(ctx.out(), "{indent}   bool hitToken=false;PARSER_TOKEN winningToken;bool winningPushable=pushable;bool winningPoppable=poppable;bool winningSkippable=skippable;\n", fmt::make_format_args(iArg));
+//         std::cout<<"tokens "<<v.size()<<std::endl;
+        for (int i= 0; i < v.size(); ++i){
+            std::string iA=std::get<0>(v[i]);
+            std::string tA=std::get<1>(v[i]);
+            auto fArg=fmt::arg("function", iA);
+            auto tArg=fmt::arg("token", tA);
+            //auto eArg=fmt::arg("expression", eA);
+            // if(i==0)
+                fmt::vformat_to(ctx.out(), "{indent}pushable=false;poppable=false;skippable=false;\n{indent}if({function}(ldagGraph, count, length)){{\n{indent}   hitToken=true;winningToken={token};winningPushable=pushable;winningPoppable=poppable;winningSkippable=skippable;\n{indent}}}\n", fmt::make_format_args(iArg, fArg, tArg));
+            // else
+            //     fmt::vformat_to(ctx.out(), "{indent}}}else if({function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token_start={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
+        }
+        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.parser_token=winningToken, .token_start=graph::vertex_value(ldagGraph, ldagGraph[u.index]).token_start, .token_end=graph::vertex_value(ldagGraph, ldagGraph[u.index]).token_end, .id=u.index}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    count++;\n{indent}}}else{{}}\n", fmt::make_format_args(iArg));
         else return fmt::format_to(ctx.out(), "");
 //        if(curly){
 //            constexpr char* fmt={"}}"};
@@ -246,6 +284,7 @@ namespace sylvanmats::publishing{
         std::vector<T> modes{"DEFAULT", "Options", "Tokens", "Channels"};
         std::vector<std::tuple<T, T>> lexerRuleClasses;
         std::vector<std::tuple<std::string, std::string, std::string, bool>> ladderRules;
+        std::vector<std::tuple<std::string, std::string, bool>> parseLadderRules;
         std::vector<std::tuple<T, T, T>> parserRuleClasses;
         T primaryParserRule{};
 
@@ -284,9 +323,10 @@ namespace sylvanmats::publishing{
             std::cout<<"total modes#:  "<<modes.size()<<std::endl;
             auto lrArg=fmt::arg("lexer_rules", lexerRuleClasses);
             auto prArg=fmt::arg("parser_rules", parserRuleClasses);
-            auto rlArg=fmt::arg("rules_ladder", ladderRules);
-            auto pprArg=fmt::arg("primary_parser_rule", primaryParserRule);
-              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, csArg, tlcArg, tliiArg, tArg, mArg, lrArg, prArg, rlArg, pprArg));
+            auto llArg=fmt::arg("lexer_ladder", ladderRules);
+            auto plArg=fmt::arg("parser_ladder", parseLadderRules);
+            //auto pprArg=fmt::arg("primary_parser_rule", primaryParserRule);
+              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, csArg, tlcArg, tliiArg, tArg, mArg, lrArg, prArg, llArg,plArg));
               return ret;
           };
 
@@ -305,11 +345,11 @@ namespace sylvanmats::publishing{
             if(!frag)ladderRules.push_back(std::make_tuple(t, mode, token, true));
         };
         void appendParserRuleClass(T t, T mode, T token, bool frag, T expr){
-            if(primaryParserRule.empty())primaryParserRule=t;
+            //if(primaryParserRule.empty())primaryParserRule=t;
             parserRuleClasses.push_back(std::make_tuple(t, mode, expr));
-            T cT=t;
+            //T cT=t;
             //std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            
-            //if(!frag)ladderRules.push_back(std::make_tuple(t, mode, cT, true));
+            if(!frag)parseLadderRules.push_back(std::make_tuple(t, token, true));
         };  
         protected:
 

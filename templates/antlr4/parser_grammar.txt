@@ -45,6 +45,9 @@ namespace {namespace} {{
         std::vector<parser_node> vertices;
         std::vector<std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>> edges;
         std::stack<size_t> associates;
+        bool pushable=false;
+        bool poppable=false;
+        bool skippable=false;
         
         {token_vocab_class} {token_vocab_instance};
     
@@ -64,15 +67,19 @@ namespace {namespace} {{
         associates.push(vertices.size());
         vertices.push_back({{.parser_token=PARSER_ROOT, .token_start=LEXER_ROOT, .id=0}});
         {token_vocab_instance}(utf16, [&](LG& ldagGraph){{
+        size_t count=0;
+        size_t length=graph::num_vertices(ldagGraph);
         int     status;
         std::cout<<"ldagGraph "<<graph::num_vertices(ldagGraph)<<" "<<graph::num_edges(ldagGraph)<<std::endl;
-        std::u16string::const_iterator it = utf16.begin();
-        auto& source=ldagGraph[0];
-        for (auto&& oe : graph::edges(ldagGraph, source)){{
-            graph::container::csr_row<unsigned int>& o=ldagGraph[graph::target_id(ldagGraph, oe)];
-            std::cout<<"? "<<{primary_parser_rule}(ldagGraph, o)<<std::endl;
+        for(size_t count=0;count<length;count++){{
+            auto& luv=graph::vertex_value(ldagGraph, ldagGraph[count]);
+            std::u16string uvStr(luv.start, luv.stop);
+          std::cout<<"lex "<<luv.mode<<" "<<luv.token_start<<" id="<<luv.token_end<<" "<<cv.to_bytes(uvStr)<<std::endl;
+{lexer_ladder}
+{parser_ladder}
+            
+            count++;
         }}
-{rules_ladder}
             std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& a, std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& b){{if(std::get<0>(a)!=std::get<0>(b)){{return std::get<0>(a)<std::get<0>(b);}} return std::get<1>(a)<std::get<1>(b);}});
             using value = std::ranges::range_value_t<decltype(edges)>;
             graph::vertex_id_t<PG> N = static_cast<graph::vertex_id_t<PG>>(size(graph::vertices(this->dagGraph)));

@@ -17,6 +17,8 @@
 #include <ranges>
 #include <chrono>
 #include <algorithm>
+#include <valarray>
+#include <limits>
 
 #define FMT_HEADER_ONLY
 #include "graph/container/compressed_graph.hpp"
@@ -274,9 +276,30 @@ TEST_CASE("test mini path parser"){
         CHECK_EQ(graph::num_vertices(dagGraph), 3);
         CHECK_EQ(graph::vertices(dagGraph).size(), 3);
         CHECK_EQ(graph::num_edges(dagGraph), 2);
+
         auto it = std::ranges::find_if(graph::vertices(dagGraph),
                                  [&](auto& u) { return graph::vertex_value(dagGraph, u).id == 0; });
         graph::vertex_id_t<sylvanmats::antlr4::mini::PG> source=static_cast<graph::vertex_id_t<sylvanmats::antlr4::mini::PG>>(it - begin(graph::vertices(dagGraph)));
+        std::cout<<"source "<<(*it).index<<std::endl;
+        std::valarray<int> distanceMap(graph::num_vertices(ldagGraph));
+        distanceMap[0]=0;
+        for(int i=1;i<distanceMap.size();i++)distanceMap[i]=std::numeric_limits<int>::min();
+        for(auto& u : graph::vertices(dagGraph)){
+            auto& uv=graph::vertex_value(dagGraph, u);
+            auto& luv=graph::vertex_value(ldagGraph, ldagGraph[uv.id]);
+            std::u16string uvStr(luv.start, luv.stop);
+          std::cout<<" "<<uv.mode<<" "<<uv.parser_token<<" id="<<uv.id<<" "<<utf16conv.to_bytes(uvStr)<<std::endl;
+            for(auto&& uve : graph::edges(dagGraph, u)){
+                graph::container::csr_row<unsigned int>& v=dagGraph[graph::target_id(dagGraph, uve)];
+                auto& vv=graph::vertex_value(dagGraph, v);
+                distanceMap[vv.id] = std::max(distanceMap[vv.id], distanceMap[uv.id] + 1);//weight(u, v))
+            }
+        }
+        int longestIndex=0;
+        int maxDistance=0;
+        for(int i=1;i<distanceMap.size();i++)
+            if(maxDistance<distanceMap[i]){maxDistance=distanceMap[i];longestIndex=1;}
+        std::cout<<"longest "<<longestIndex<<" "<<distanceMap[longestIndex]<<std::endl;
         auto dfs = graph::views::vertices_depth_first_search(dagGraph, source);
         for (auto&& [uid, u] : dfs) {
             auto& uv=graph::vertex_value(dagGraph, u);
@@ -284,7 +307,7 @@ TEST_CASE("test mini path parser"){
           size_t depth=dfs.depth();
             auto& lov=graph::vertex_value(ldagGraph, ldagGraph[uv.id]);
             std::u16string vvStr(lov.start, lov.stop);
-          std::cout<<" "<<uv.mode<<" "<<uv.parser_token<<" "<<currentId<<" "<<depth<<" "<<utf16conv.to_bytes(vvStr)<<std::endl;
+          std::cout<<" "<<uv.mode<<" "<<uv.parser_token<<" id="<<currentId<<" "<<depth<<" "<<utf16conv.to_bytes(vvStr)<<std::endl;
         }
     });
     auto end = std::chrono::high_resolution_clock::now();

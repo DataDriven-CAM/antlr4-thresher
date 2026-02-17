@@ -19,6 +19,7 @@ namespace sylvanmats::dsl{
         std::filesystem::path directory="./";
         std::u16string lexerInstance{};
         std::u16string tokenPrefix=u"LEXER_";
+        std::u16string whileInc{};
         std::u16string tempInc=u"temp++";
         std::u16string orReset=u"";
     public:

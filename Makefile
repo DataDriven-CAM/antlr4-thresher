@@ -41,6 +41,7 @@ build/src/dsl/Morpher.o: ./src/dsl/Morpher.cpp
 #	@mkdir -p $(@D)
 #	$(CXX) $(CXXFLAGS) -c -o build/src/publishing/CodeGenerator.o ./src/publishing/CodeGenerator.cpp
 
+-include build/tool/src/main.d
 build/tool/src/main.o : CXXFLAGS=-std=c++26 -DNDEBUG  -O3 -fPIC -fpermissive -I./include -I$(MODULE_DIRECTORY)/CLI11/include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/graph-v2/include -MMD
 build/tool/src/main.o : ./tool/src/main.cpp
 	@mkdir -p $(@D)

@@ -16,16 +16,3 @@ multiplicativeexpr : minteger (STAR minteger)*;
 
 minteger : IntegerLiteral;
 
-elementtest
-    : (elementnameorwildcard ( COMMA typename_ QM?)?)? 
-    ;
-
-elementnameorwildcard
-    : STAR
-    ;
-
-typename_
-    : eqname
-    ;
-
-eqname : KW_ELEMENT ;
