@@ -46,7 +46,7 @@ namespace {namespace} {{
     class {class} {super_class}{{
     protected:
         LG dagGraph;
-        std::vector<ast_node> vertices;
+        std::vector<ast_node> vertices{{{vertex_list}}};
         std::vector<std::tuple<graph::vertex_id_t<LG>, graph::vertex_id_t<LG>, int>> edges;
         std::stack<size_t> associates;
         MODE mode = DEFAULT;
@@ -76,6 +76,7 @@ namespace {namespace} {{
         int depth=0;
         itEnd=utf16.end();
         std::u16string::const_iterator temp=it;
+        //vertices.clear();
         associates.push(vertices.size());
         vertices.push_back({{.start=&(*it), .stop=&(*it), .token_start=LEXER_ROOT}});
 {lexer_ladder}

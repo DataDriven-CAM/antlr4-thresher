@@ -37,5 +37,5 @@ tmp/
 grammars/*
 /test/build/
 /test/include/
-/test/test
 cantlrtool
+test/test

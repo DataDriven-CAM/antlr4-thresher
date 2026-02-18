@@ -42,7 +42,7 @@ namespace {namespace} {{
     class {class} {super_class}{{
     protected:
         PG dagGraph;
-        std::vector<parser_node> vertices;
+        std::vector<parser_node> vertices{{{vertex_list}}};
         std::vector<std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>> edges;
         std::stack<size_t> associates;
         bool pushable=false;
@@ -64,8 +64,9 @@ namespace {namespace} {{
 
     void operator()(std::u16string& utf16, std::function<void(LG& ldagGraph, PG& dagGraph)> apply){{
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
-        associates.push(vertices.size());
-        vertices.push_back({{.parser_token=PARSER_ROOT, .token_start=LEXER_ROOT, .id=0}});
+        associates.push(0);
+        vertices.front().token_start=LEXER_ROOT;
+        vertices.front().id=0;
         {token_vocab_instance}(utf16, [&](LG& ldagGraph){{
         size_t count=0;
         size_t length=graph::num_vertices(ldagGraph);
