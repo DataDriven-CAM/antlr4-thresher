@@ -507,12 +507,12 @@ namespace sylvanmats::antlr4::parse {
 //            dagGraph.reserve_vertices(vertices.size());
 //            dagGraph.reserve_edges(edges.size());
             dagGraph.load_edges(edges, [](const value& val) -> graph::copyable_edge_t<size_t, int>{
-                    std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
+                    //std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
                 return {std::get<0>(val), std::get<1>(val), std::get<2>(val)};
               });
             dagGraph.load_vertices(vertices, [&](const ast_node& nm) ->graph::copyable_vertex_t<graph::vertex_id_t<G>, ast_node>{
                 auto uid = static_cast<graph::vertex_id_t<G>>(&nm - vertices.data());
-                std::cout<<"vertex "<<uid<<std::endl;
+                //std::cout<<"vertex "<<uid<<std::endl;
                 return {uid, nm};
             });
             //display();
