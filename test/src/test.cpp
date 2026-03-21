@@ -29,7 +29,7 @@
 
 #include "io/tiny/TinyParser.h"
 #include "io/mini/MiniParser.h"
-#include "graph/views/depth_first_search.hpp"
+#include "graph/views/dfs.hpp"
 
 #include "mio/mmap.hpp"
 
@@ -52,7 +52,7 @@ TEST_CASE("test u16 fmt formatting"){
     CHECK_EQ(content, contentResults);
 }
 
-TEST_CASE("test graph-v2"){
+TEST_CASE("test graph-v3"){
     std::string content=R"(lexer grammar NLPLexer;
 tokens { STRING }
 )";
@@ -65,9 +65,9 @@ tokens { STRING }
     vertices.push_back(sylvanmats::antlr4::parse::ast_node{.start=&(*it)+14, .stop=&(*it)+21, .token_start=sylvanmats::antlr4::parse::STRING_LITERAL});
     graph::container::compressed_graph<int, sylvanmats::antlr4::parse::ast_node> astGraph{{0,1,1}, {1,2,1}};
     //astGraph.reserve(3);
-    astGraph.load_vertices(vertices, [&vertices](sylvanmats::antlr4::parse::ast_node& nm) {
+    astGraph.load_vertices(vertices, [&vertices](const sylvanmats::antlr4::parse::ast_node& nm) ->graph::copyable_vertex_t< graph::vertex_id_t<graph::container::compressed_graph<int, sylvanmats::antlr4::parse::ast_node>>, sylvanmats::antlr4::parse::ast_node>{
         auto uid = static_cast<graph::vertex_id_t<graph::container::compressed_graph<int, sylvanmats::antlr4::parse::ast_node>>>(&nm - vertices.data());
-        return graph::copyable_vertex_t< graph::vertex_id_t<graph::container::compressed_graph<int, sylvanmats::antlr4::parse::ast_node>>, sylvanmats::antlr4::parse::ast_node>{uid, nm};
+        return {uid, nm};
     });
     std::cout<<"size: "<<graph::num_vertices(astGraph)<<" "<<graph::vertices(astGraph).size()<<std::endl;
     CHECK_EQ(graph::num_vertices(astGraph), 3);
@@ -277,20 +277,20 @@ TEST_CASE("test mini path parser"){
         CHECK_EQ(graph::vertices(dagGraph).size(), 3);
         CHECK_EQ(graph::num_edges(dagGraph), 2);
 
-        auto it = std::ranges::find_if(graph::vertices(dagGraph),
-                                 [&](auto& u) { return graph::vertex_value(dagGraph, u).id == 0; });
-        graph::vertex_id_t<sylvanmats::antlr4::mini::PG> source=static_cast<graph::vertex_id_t<sylvanmats::antlr4::mini::PG>>(it - begin(graph::vertices(dagGraph)));
-        std::cout<<"source "<<(*it).index<<std::endl;
+        auto it = std::ranges::find_if(dagGraph.vertex_ids(),
+                                 [&](auto u) { return dagGraph.vertex_value(u).id == 0; });
+        graph::vertex_id_t<sylvanmats::antlr4::mini::PG> source=static_cast<graph::vertex_id_t<sylvanmats::antlr4::mini::PG>>(it - std::begin(dagGraph.vertex_ids()));
+        //std::cout<<"source "<<(*it).index<<std::endl;
         std::valarray<int> distanceMap(graph::num_vertices(ldagGraph));
         distanceMap[0]=0;
         for(int i=1;i<distanceMap.size();i++)distanceMap[i]=std::numeric_limits<int>::min();
-        for(auto& u : graph::vertices(dagGraph)){
+        for(auto u : graph::vertices(dagGraph)){
             auto& uv=graph::vertex_value(dagGraph, u);
-            auto& luv=graph::vertex_value(ldagGraph, ldagGraph[uv.id]);
+            auto& luv=graph::vertex_value(ldagGraph, *graph::find_vertex(ldagGraph, uv.id));
             std::u16string uvStr(luv.start, luv.stop);
           std::cout<<" "<<uv.mode<<" "<<uv.parser_token<<" id="<<uv.id<<" "<<utf16conv.to_bytes(uvStr)<<std::endl;
-            for(auto&& uve : graph::edges(dagGraph, u)){
-                graph::container::csr_row<unsigned int>& v=dagGraph[graph::target_id(dagGraph, uve)];
+            for(auto&& uve : graph::views::incidence(dagGraph, u)){
+                auto v=*graph::find_vertex(dagGraph, uve.target_id);
                 auto& vv=graph::vertex_value(dagGraph, v);
                 distanceMap[vv.id] = std::max(distanceMap[vv.id], distanceMap[uv.id] + 1);//weight(u, v))
             }
@@ -300,12 +300,12 @@ TEST_CASE("test mini path parser"){
         for(int i=1;i<distanceMap.size();i++)
             if(maxDistance<distanceMap[i]){maxDistance=distanceMap[i];longestIndex=1;}
         std::cout<<"longest "<<longestIndex<<" "<<distanceMap[longestIndex]<<std::endl;
-        auto dfs = graph::views::vertices_depth_first_search(dagGraph, source);
-        for (auto&& [uid, u] : dfs) {
+        auto dfs = graph::views::vertices_dfs(dagGraph, source);
+        for (auto&& [u] : dfs) {
             auto& uv=graph::vertex_value(dagGraph, u);
           size_t currentId=uv.id;
           size_t depth=dfs.depth();
-            auto& lov=graph::vertex_value(ldagGraph, ldagGraph[uv.id]);
+            auto& lov=graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph, uv.id));
             std::u16string vvStr(lov.start, lov.stop);
           std::cout<<" "<<uv.mode<<" "<<uv.parser_token<<" id="<<currentId<<" "<<depth<<" "<<utf16conv.to_bytes(vvStr)<<std::endl;
         }

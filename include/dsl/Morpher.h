@@ -33,7 +33,7 @@ namespace sylvanmats::dsl{
     private:
         bool skip=false;
         std::vector<std::u16string> currentMode;
-        void operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v);
-        bool recurseLexerRule(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& source, std::vector<std::u16string>& expr);
+        void operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::vertex_id_t<sylvanmats::antlr4::parse::G> vid);
+        bool recurseLexerRule(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::vertex_id_t<sylvanmats::antlr4::parse::G> sourceid, std::vector<std::u16string>& expr);
     };
 }

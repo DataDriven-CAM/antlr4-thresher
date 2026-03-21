@@ -8,6 +8,9 @@
 #include <cstddef>
 #include <cstdarg>
 #include <cwchar>
+#include <algorithm>
+#include <iterator>
+
 #include <typeinfo>
 #include <stacktrace>
 
@@ -20,6 +23,14 @@ namespace sylvanmats::publishing{
     template<typename T>
     struct vertex_type{
         T name;
+        T type;
+    };
+    template<typename T>
+    struct edge_type{   
+        T source;
+        int source_index;
+        T target;
+        int target_index;
         T type;
     };
 }
@@ -79,6 +90,36 @@ struct fmt::formatter<std::vector<sylvanmats::publishing::vertex_type<std::strin
 };
 
 template <>
+struct fmt::formatter<std::vector<sylvanmats::publishing::edge_type<std::string>>>{
+    constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator {
+        return ctx.begin();
+    }
+    
+     auto format(const std::vector<sylvanmats::publishing::edge_type<std::string>>& v, format_context& ctx) const -> format_context::iterator{
+        if(v.empty()){
+            constexpr typename std::string::value_type* fmt="";
+            return fmt::format_to(ctx.out(), fmt);
+        }
+        std::string indentation(8, ' ');
+         //std::cout<<"tokens "<<v.size()<<std::endl;
+        for (int i= 0; i < v.size(); ++i){
+            //auto iArg=fmt::arg("indent", indentation);
+            std::string sA=v[i].source;
+            int uA=v[i].source_index;
+            std::string tA=v[i].target;
+            int vA=v[i].target_index;
+            std::string typeA=v[i].type;
+            fmt::vformat_to(ctx.out(), "{}edges.push_back(std::make_tuple({}, {}, 1));\n", fmt::make_format_args(indentation, uA, vA));
+        }
+        constexpr typename std::string::value_type* fmt={""};
+        return fmt::format_to(ctx.out(), fmt);
+    }
+    // ...
+    bool        curly{false};
+    std::string value_format;
+};
+
+template <>
 struct fmt::formatter<std::vector<std::tuple<std::string, std::string>>>{
     auto parse(format_parse_context& ctx) -> format_parse_context::iterator{
         return ctx.begin();
@@ -122,7 +163,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
             auto fArg=fmt::arg("function", iA);
             auto eArg=fmt::arg("expression", eA);
             auto psArg=fmt::arg("parser_token", ps);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, size_t&, size_t)> {function} = [&](LG& ldagGraph, size_t& index, size_t length) {{\n{indent}    size_t lIndex=index;\n{indent}    bool ret={expression}; if(ret){{associates.push(vertices.size()-1);index=lIndex;std::cout<<lIndex<<\" \"<<\"{function} \"<<(graph::vertex_value(ldagGraph, ldagGraph[lIndex]).token_start)<<std::endl;}}else if(associates.size()>1){{associates.pop();}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(LG&, size_t&, size_t)> {function} = [&](LG& ldagGraph, size_t& index, size_t length) {{\n{indent}    size_t lIndex=index;\n{indent}    bool ret={expression}; if(ret){{associates.push(vertices.size()-1);index=lIndex;std::cout<<lIndex<<\" \"<<\"{function} \"<<(graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph, lIndex)).token_start)<<std::endl;}}else if(associates.size()>1){{associates.pop();}}return ret;\n{indent}}};\n\n", fmt::make_format_args(iArg, fArg, eArg, psArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -194,7 +235,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, bool>>>{
             // else
             //     fmt::vformat_to(ctx.out(), "{indent}}}else if({function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token_start={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
         }
-        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.parser_token=winningToken, .token_start=graph::vertex_value(ldagGraph, ldagGraph[count]).token_start, .token_end=graph::vertex_value(ldagGraph, ldagGraph[count]).token_end, .id=count}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    count++;\n{indent}}}else{{}}\n", fmt::make_format_args(iArg));
+        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.parser_token=winningToken, .token_start=graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph, count)).token_start, .token_end=graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph,count)).token_end, .id=count}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    count++;\n{indent}}}else{{}}\n", fmt::make_format_args(iArg));
         else return fmt::format_to(ctx.out(), "");
 //        if(curly){
 //            constexpr char* fmt={"}}"};
@@ -319,6 +360,7 @@ namespace sylvanmats::publishing{
         T parserClass{};
         std::vector<T> tokens;
         std::vector<vertex_type<T>> vertexList;
+        std::vector<edge_type<T>> edgeList;
         std::vector<T> modes{"DEFAULT", "Options", "Tokens", "Channels"};
         std::vector<std::tuple<T, T>> lexerRuleClasses;
         std::vector<std::tuple<std::string, std::string, std::string, bool>> ladderRules;
@@ -359,6 +401,8 @@ namespace sylvanmats::publishing{
             auto tArg=fmt::arg("tokens", tokens);
             if(tokenVocab.empty())vertexList.clear();
             auto vlArg= fmt::arg("vertex_list", vertexList);
+            if(tokenVocab.empty())edgeList.clear();
+            auto elArg= fmt::arg("edge_list", edgeList);
             auto mArg=fmt::arg("modes", modes);
             std::cout<<"total modes#:  "<<modes.size()<<std::endl;
             auto lrArg=fmt::arg("lexer_rules", lexerRuleClasses);
@@ -366,7 +410,7 @@ namespace sylvanmats::publishing{
             auto llArg=fmt::arg("lexer_ladder", ladderRules);
             auto plArg=fmt::arg("parser_ladder", parseLadderRules);
             //auto pprArg=fmt::arg("primary_parser_rule", primaryParserRule);
-              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, csArg, tlcArg, tliiArg, tArg, vlArg, mArg, lrArg, prArg, llArg,plArg));
+              T ret=render(!tokenVocab.empty() ? parserGrammarTemplate : lexerGrammarTemplate, fmt::make_format_args(bcArg, tliArg, nsArg, classArg, csArg, tlcArg, tliiArg, tArg, vlArg, elArg, mArg, lrArg, prArg, llArg,plArg));
               return ret;
           };
 
@@ -384,12 +428,20 @@ namespace sylvanmats::publishing{
             if(!mode.empty() && std::none_of(modes.begin(), modes.end(), [&mode](std::string& s){return s.compare(mode)==0;}))modes.push_back(mode);
             if(!frag)ladderRules.push_back(std::make_tuple(t, mode, token, true));
         };
-        void appendParserRuleClass(T t, T mode, T token, bool frag, T expr){
+        void appendParserRuleClass(T t, T mode, T parentToken, T token, bool frag, T expr){
             //if(primaryParserRule.empty())primaryParserRule=t;
             parserRuleClasses.push_back(std::make_tuple(t, mode, expr));
             //T cT=t;
             //std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char& c){return std::toupper(c);});            
-            if(!frag)parseLadderRules.push_back(std::make_tuple(t, token, true));
+            if(!frag){
+                parseLadderRules.push_back(std::make_tuple(t, token, true));
+                if(parseLadderRules.size()>1){
+                std::vector<std::tuple<std::string, std::string, bool>>::iterator it = std::find_if(parseLadderRules.begin(), parseLadderRules.end(), [&parentToken](const auto& elem){return std::get<1>(elem).compare(parentToken)==0;} );
+                size_t parentIndex=(it != parseLadderRules.end())? std::distance(parseLadderRules.begin(), it) : 0;
+                size_t tokenIndex=parseLadderRules.size()-1;
+                edgeList.push_back({parentToken, parentIndex, token, tokenIndex, tokenPrefix+token});
+                }
+            }
         };  
         protected:
 

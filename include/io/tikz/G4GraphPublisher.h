@@ -6,7 +6,7 @@
 #include <cwchar>
 #include <typeinfo>
 
-#include "graph/views/depth_first_search.hpp"
+#include "graph/views/dfs.hpp"
 #include "graph/views/vertexlist.hpp"
 
 #define FMT_HEADER_ONLY
@@ -35,7 +35,7 @@ namespace sylanmats::io::tikz{
             std::vector<int> visited(graph::num_vertices(dagGraph), 0);
             auto vlist = graph::views::vertexlist(dagGraph);
             for (auto&& [uid, u] : graph::views::vertexlist(dagGraph)) {
-                if (visited[uid]>0 || size(graph::edges(dagGraph, uid))==0) {
+                if (visited[uid]>0 || size(graph::views::incidence(dagGraph, uid))==0) {
                   continue;
                 }
                 visited[uid]++;
@@ -47,16 +47,18 @@ namespace sylanmats::io::tikz{
                 //if(label.empty())std::cout<<label.size()<<" label root "<<"|"<<std::endl;
                 (!label.empty()) ? tree.append(cv.to_bytes(label)) : tree.append("root");
                 //tree.append(std::to_string(uValue.obj_size));
-                if(size(graph::edges(dagGraph, uid))>1)tree.append("{");
-                auto dfs=graph::views::sourced_edges_depth_first_search(dagGraph, uid);
+                if(size(graph::views::incidence(dagGraph, uid))>1)tree.append("{");
+                auto dfs=graph::views::edges_dfs(dagGraph, uid);
                 size_t depth=dfs.depth();
                 size_t notchDepth=depth;
-                for (auto&& [vid, wid, wv] : dfs) {
-                  auto ev=edge_value(dagGraph, wv);
+                for (auto&& [e] : dfs) {
+                auto vid = static_cast<size_t>(graph::adj_list::source_id(dagGraph, e));
+                auto wid = static_cast<size_t>(graph::adj_list::target_id(dagGraph, e));
+                  auto ev=edge_value(dagGraph, e);
                   //std::cout<<typeid(wv).name()<<" "<<depth<<" "<<dfs.depth()<<" "<<size(graph::edges(dagGraph, vid))<<" "<<visited[vid]<<" "<<size(graph::edges(dagGraph, wid))<<" "<<visited[wid]<<std::endl;
                   //if (!visited[ev]) {
                   if(depth>dfs.depth()){
-                    if(!tree.empty() && size(graph::edges(dagGraph, vid))>1 && size(graph::edges(dagGraph, vid))==visited[vid])tree.append("}");
+                    if(!tree.empty() && size(graph::views::incidence(dagGraph, vid))>1 && size(graph::views::incidence(dagGraph, vid))==visited[vid])tree.append("}");
                     if(!tree.empty())tree.append(";\n");
                     auto vValue=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, vid));
                     label.assign(vValue.start, vValue.stop);
@@ -65,7 +67,7 @@ namespace sylanmats::io::tikz{
                   }
                     auto& wValue=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, wid));
                     tree.append(" -> ");
-                    if(depth<dfs.depth() && size(graph::edges(dagGraph, vid))>1 && visited[vid]==0)tree.append("{");
+                    if(depth<dfs.depth() && size(graph::views::incidence(dagGraph, vid))>1 && visited[vid]==0)tree.append("{");
                     tree.append("\"");
                     if(wValue.token_start==sylvanmats::antlr4::parse::SEMI){
                          label.assign(wValue.start, wValue.stop);
@@ -80,13 +82,13 @@ namespace sylanmats::io::tikz{
                     label.assign(wValue.start, wValue.stop);
                     tree.append(cv.to_bytes(label));
                     tree.append("\"");
-                    if(size(graph::edges(dagGraph, wid))==0)tree.append(" [mark]}");
+                    if(size(graph::views::incidence(dagGraph, wid))==0)tree.append(" [mark]}");
                     visited[vid]++;
                   //}
                   if(depth>dfs.depth())notchDepth=dfs.depth();
                   depth=dfs.depth();
                 }
-                    if(size(graph::edges(dagGraph, uid))>1)tree.append("};\n");
+                    if(size(graph::views::incidence(dagGraph, uid))>1)tree.append("};\n");
             }
             //std::cout<<"tree "<<std::endl;
             auto cArg=fmt::arg("tree", tree);

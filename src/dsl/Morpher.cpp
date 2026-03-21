@@ -19,12 +19,12 @@ namespace sylvanmats::dsl{
     }
 
     void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph){
-        auto itDag = std::ranges::find_if(graph::vertices(dagGraph),
-                                 [&](auto& u) { return graph::vertex_value(dagGraph, u).token_start == sylvanmats::antlr4::parse::ROOT; });
-        graph::vertex_id_t<sylvanmats::antlr4::parse::G> vid=static_cast<graph::vertex_id_t<sylvanmats::antlr4::parse::G>>(itDag - begin(graph::vertices(dagGraph)));
-        auto& v=dagGraph[vid];
+        auto itDag = std::ranges::find_if(dagGraph.vertex_ids(),
+                                 [&](auto u) { return dagGraph.vertex_value(u).token_start == sylvanmats::antlr4::parse::ROOT; });
+        graph::vertex_id_t<sylvanmats::antlr4::parse::G> vid=static_cast<graph::vertex_id_t<sylvanmats::antlr4::parse::G>>(itDag - std::begin(dagGraph.vertex_ids()));
+        auto v=*find_vertex(dagGraph,vid);
         //std::cout<<"vid "<<vid<<" "<<graph::num_vertices(dagGraph)<<" "<<graph::num_edges(dagGraph)<<std::endl;
-        this->operator()(g4Buffer, dagGraph, v);
+        this->operator()(g4Buffer, dagGraph, vid);
         // for (auto&& oe : graph::edges(dagGraph, v)) {
         //     graph::container::csr_row<unsigned int>& o=dagGraph[graph::target_id(dagGraph, oe)];
         //     /*int status;
@@ -39,14 +39,15 @@ namespace sylvanmats::dsl{
         // }
     }
 
-    void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& v){
+    void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::vertex_id_t<sylvanmats::antlr4::parse::G> vid){
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         std::vector<std::u16string> expr{std::u16string{}};
         std::u16string slabel{};
         std::u16string label{};
         bool frag=false;
-        for (auto&& oe : graph::edges(dagGraph, v)) {
-            graph::container::csr_row<unsigned int>& o=dagGraph[graph::target_id(dagGraph, oe)];
+        auto v=*find_vertex(dagGraph,vid);
+        for (auto&& oe : graph::views::incidence(dagGraph, v)) {
+            auto o=*find_vertex(dagGraph, oe.target_id);
             /*int status;
             char*realname = abi::__cxa_demangle(typeid(o).name(), nullptr, nullptr, &status);
             std::cout<<"o type: "<<typeid(o).name()<< " => "<<realname<<std::endl;
@@ -63,18 +64,19 @@ namespace sylvanmats::dsl{
             }
             else if(nv.token_start==sylvanmats::antlr4::parse::COLON && !label.empty()){
                 expr.push_back(std::u16string{});
-                recurseLexerRule(g4Buffer, dagGraph, o, expr);
+                recurseLexerRule(g4Buffer, dagGraph, oe.target_id, expr);
                 if(expr.back().empty())expr.back()=u"false";
                 std::u16string exprLine{};
                 for(std::u16string& entry : expr){exprLine.append(entry);}
                 std::u16string cT=tokenPrefix+label;
+                std::u16string csT=tokenPrefix+slabel;
                 std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char16_t& c){return std::toupper(c);});
                 // std::cout<<cv.to_bytes(label)<<" COLON: "<<" "<<frag<<std::endl;
                 std::string mode=(!currentMode.empty()) ? cv.to_bytes(currentMode.back()): "";
                 if(std::isupper(label.at(0)))
                     codeGenerator.appendLexerRuleClass(cv.to_bytes(label), mode, cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
                 else
-                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
+                    codeGenerator.appendParserRuleClass(cv.to_bytes(label), "", cv.to_bytes(csT), cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
                 codeGenerator.appendToken(cv.to_bytes(cT));
                 label.clear();
                 frag=false;
@@ -82,8 +84,8 @@ namespace sylvanmats::dsl{
             }
             else if(nv.token_start==sylvanmats::antlr4::parse::IMPORT){
                 // std::cout<<"token==IMPORT "<<size(graph::edges(dagGraph, o))<<std::endl;
-                for (auto&& ge : graph::edges(dagGraph, o)){
-                    auto& g=dagGraph[graph::target_id(dagGraph, ge)];
+                for (auto&& ge : graph::views::incidence(dagGraph, o)){
+                    auto g=*graph::find_vertex(dagGraph, ge.target_id);
                     auto& gv=graph::vertex_value(dagGraph, g);
                     if(gv.token_start==sylvanmats::antlr4::parse::ID){
                     std::u16string lexStr(gv.start, gv.stop);
@@ -109,13 +111,13 @@ namespace sylvanmats::dsl{
                     codeGenerator.setTokenPrefix(cv.to_bytes(tokenPrefix));
                 }
                 codeGenerator.appendToken(cv.to_bytes(tokenPrefix+u"ROOT"));
-                for (auto&& ge : graph::edges(dagGraph, o)){
-                auto& g=dagGraph[graph::target_id(dagGraph, ge)];
+                for (auto&& ge : graph::views::incidence(dagGraph, o)){
+                auto g=*graph::find_vertex(dagGraph, ge.target_id);
                 auto& gv=graph::vertex_value(dagGraph, g);
                 if(gv.token_start==sylvanmats::antlr4::parse::GRAMMAR){
                     //std::cout<<"token==GRAMMAR "<<" "<<size(graph::edges(dagGraph, g))<<std::endl;
-                    for (auto&& ie : graph::edges(dagGraph, g)){
-                    auto& i=dagGraph[graph::target_id(dagGraph, ie)];
+                    for (auto&& ie : graph::views::incidence(dagGraph, g)){
+                    auto i=*graph::find_vertex(dagGraph, ie.target_id);
                     auto& iv=graph::vertex_value(dagGraph, i);
                     if(iv.token_start==sylvanmats::antlr4::parse::SEMI)continue;
                     std::u16string parserClass(iv.start, iv.stop);
@@ -126,8 +128,8 @@ namespace sylvanmats::dsl{
                 }
             }
             else if(nv.token_start==sylvanmats::antlr4::parse::MODE){
-                for (auto&& ipe : graph::edges(dagGraph, o)){
-                    graph::container::csr_row<unsigned int>& ip=dagGraph[graph::target_id(dagGraph, ipe)];
+                for (auto&& ipe : graph::views::incidence(dagGraph, o)){
+                    auto ip=*graph::find_vertex(dagGraph, ipe.target_id);
                     auto& ipv=graph::vertex_value(dagGraph, ip);
                     std::u16string ipvStr(ipv.start, ipv.stop);
                     if(ipv.token_start==sylvanmats::antlr4::parse::ID){
@@ -139,13 +141,14 @@ namespace sylvanmats::dsl{
         }
     }
 
-    bool Morpher::recurseLexerRule(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::container::csr_row<unsigned int>& source, std::vector<std::u16string>& expr){
+    bool Morpher::recurseLexerRule(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::vertex_id_t<sylvanmats::antlr4::parse::G> sourceid, std::vector<std::u16string>& expr){
         bool ret=false;
         bool rangeOn=false;
+        auto source=*find_vertex(dagGraph,sourceid);
             auto& sv=graph::vertex_value(dagGraph, source);
         int count=0;
-        for (auto&& se : graph::edges(dagGraph, source)){
-            graph::container::csr_row<unsigned int>& v=dagGraph[graph::target_id(dagGraph, se)];
+        for (auto&& se : graph::views::incidence(dagGraph, source)){
+            auto v=*graph::find_vertex(dagGraph, se.target_id);
             auto& vv=graph::vertex_value(dagGraph, v);
             std::u16string vvStr(vv.start, vv.stop);
             // {
@@ -154,8 +157,8 @@ namespace sylvanmats::dsl{
             // std::cout<<" to "<<vv.token_start<<" "<<cv.to_bytes(vvStr)<<" "<<sylvanmats::antlr4::parse::PLUS<<" "<<(vv.token_start==sylvanmats::antlr4::parse::PLUS)<<std::endl;
             // }
             if(vv.token_start==sylvanmats::antlr4::parse::ID){
-                auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                auto& vp=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id+1));
+                auto& vm=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id-1));
                 std::u16string expr2(vv.start, vv.stop);
                 if(expr2.compare(u"EOF")==0)expr2=u"EndOfFile";
                 if(vm.token_start!=sylvanmats::antlr4::parse::COLON && vm.token_start!=sylvanmats::antlr4::parse::PIPE && vm.token_start!=sylvanmats::antlr4::parse::LPAREN && vm.token_start!=sylvanmats::antlr4::parse::NOT && vm.token_start!=sylvanmats::antlr4::parse::ROOT){expr.back()+=u" && ";orReset=u"";}
@@ -167,7 +170,7 @@ namespace sylvanmats::dsl{
                 if(!lexerInstance.empty()){
                     if(std::isupper(expr2.at(0))){
                         std::transform(expr2.cbegin(), expr2.cend(), expr2.begin(), [](const char16_t& c){return std::toupper(c);});
-                        expr.back()+=u"[&]()->bool{bool ret=graph::vertex_value(ldagGraph, ldagGraph[lIndex]).token_start==LEXER_"+expr2+u"? true : false; if(ret){"+tempInc+u";}return ret;}()){ret=true;}return ret;}()";
+                        expr.back()+=u"[&]()->bool{bool ret=graph::vertex_value(ldagGraph, *graph::find_vertex(ldagGraph, lIndex)).token_start==LEXER_"+expr2+u"? true : false; if(ret){"+tempInc+u";}return ret;}()){ret=true;}return ret;}()";
                     }
                     else
                         expr.back()+=expr2+u"(ldagGraph, lIndex, length)){ret=true;}return ret;}()";
@@ -182,7 +185,7 @@ namespace sylvanmats::dsl{
                //if(vp.token_start==sylvanmats::antlr4::parse::QUESTION)std::cout<<"recurse ID "<<cv.to_bytes(expr.back())<<" "<<(vp.token_start==sylvanmats::antlr4::parse::QUESTION)<<std::endl;
             }
             else if(vv.token_start==sylvanmats::antlr4::parse::LPAREN){
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                auto& vm=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id-1));
                 if(vm.token_start!=sylvanmats::antlr4::parse::COLON && vm.token_start!=sylvanmats::antlr4::parse::PIPE && vm.token_start!=sylvanmats::antlr4::parse::LPAREN && vm.token_start!=sylvanmats::antlr4::parse::ROOT){expr.back()+=u" && ";if(!lexerInstance.empty())orReset=u"lIndex=index;";}
                 expr.push_back(std::u16string{});
                 if(expr.size()<2)expr.push_back(std::u16string{});
@@ -191,8 +194,8 @@ namespace sylvanmats::dsl{
             }
             else if(vv.token_start==sylvanmats::antlr4::parse::RPAREN){
                 expr.back()+=u")";
-                auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                auto& vp=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id+1));
+                auto& vm=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id-1));
                 if(vp.token_start==sylvanmats::antlr4::parse::PLUS){
                     if(expr.size()>=2){expr[expr.size()-2]+=u"[&]()->bool{"+orReset+u"bool ret=false;while("+whileInc+expr.back()+u"){ ret=true;}return ret;}()";expr.pop_back();}
                 }
@@ -210,15 +213,15 @@ namespace sylvanmats::dsl{
             else if(vv.token_start==sylvanmats::antlr4::parse::LBRACK){
                 std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
                 std::u16string vvStr(vv.start, vv.stop);
-                size_t endRBrack=size(graph::edges(dagGraph, v));
+                size_t endRBrack=size(graph::views::incidence(dagGraph, v));
                 if(endRBrack==0){
                     sylvanmats::antlr4::parse::LineColumnFinder lineColumnFinder;
                     auto&& [line, column]=lineColumnFinder(g4Buffer, vv.start);
                     throw Exception("morphing failure: "+cv.to_bytes(vvStr)+" has no edges. Ln "+std::to_string(line)+",Col "+std::to_string(column));
                 }
-                //for (auto&& be : graph::edges(dagGraph, v))endRBrack++;
-                auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+endRBrack+1]);
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                //for (auto&& be : graph::views::incidence(dagGraph, v))endRBrack++;
+                auto& vp=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id+endRBrack+1));
+                auto& vm=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id-1));
                 std::u16string vmStr(vm.start, vm.stop);
                 std::u16string vpStr(vp.start, vp.stop);
                 // std::cout<<cv.to_bytes(vmStr)<<" start "<<cv.to_bytes(vpStr)<<" "<<endRBrack<<std::endl;
@@ -237,8 +240,8 @@ namespace sylvanmats::dsl{
                 // sylvanmats::antlr4::parse::LineColumnFinder lineColumnFinder;
                 // auto&& [line, column]=lineColumnFinder(g4Buffer, vv.start);
                 // std::cout<<std::to_string(line)<<" "<<std::to_string(column)<<" lbrack "<<cv.to_bytes(innerStr)<<" "<<(vm.token_start==sylvanmats::antlr4::parse::NOT)<<" "<<size(graph::edges(dagGraph, v))<<" "<<size(graph::edges(dagGraph, v))<<std::endl;
-                for (auto&& be : graph::edges(dagGraph, v)){
-                    auto& b=dagGraph[graph::target_id(dagGraph, be)];
+                for (auto&& be : graph::views::incidence(dagGraph, v)){
+                    auto b=*graph::find_vertex(dagGraph, be.target_id);
                     auto& bv=graph::vertex_value(dagGraph, b);
                     if(bv.token_start==sylvanmats::antlr4::parse::ARGUMENT){
                     std::u16string expr2(bv.start, bv.stop);
@@ -303,7 +306,7 @@ namespace sylvanmats::dsl{
                 expr.back()+=u" || ";
             }
             else if(vv.token_start==sylvanmats::antlr4::parse::NOT){
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                auto& vm=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id-1));
                 if(vm.token_start!=sylvanmats::antlr4::parse::COLON && vm.token_start!=sylvanmats::antlr4::parse::PIPE && vm.token_start!=sylvanmats::antlr4::parse::LPAREN && vm.token_start!=sylvanmats::antlr4::parse::LBRACK && vm.token_start!=sylvanmats::antlr4::parse::NOT && vm.token_start!=sylvanmats::antlr4::parse::ROOT){expr.back()+=u" && ";if(!lexerInstance.empty())orReset=u"lIndex=index;";}
                 else if(vm.token_start==sylvanmats::antlr4::parse::RPAREN){expr.back()+=u" && ";if(!lexerInstance.empty())orReset=u"lIndex=index;";}
                 else if(vm.token_start==sylvanmats::antlr4::parse::RBRACK){expr.back()+=u" && ";if(!lexerInstance.empty())orReset=u"lIndex=index;";}
@@ -322,7 +325,7 @@ namespace sylvanmats::dsl{
             }
             else if(vv.token_start==sylvanmats::antlr4::parse::RARROW){
                 //rangeOn=true;
-                auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
+                auto& vp=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id+1));
                 //std::cout<<vv.token_start<<" rarrow "<<size(graph::edges(dagGraph, v))<<" "<<vp.token_start<<" "<<(vp.token_start==sylvanmats::antlr4::parse::SKIP)<<std::endl;
                 if(vp.token_start==sylvanmats::antlr4::parse::SKIP){
                     if(!lexerInstance.empty())expr.back()+=u";skippable=true";
@@ -330,15 +333,15 @@ namespace sylvanmats::dsl{
                 }
                 else if(vp.token_start==sylvanmats::antlr4::parse::PUSH_MODE){
                     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
-                    if(size(graph::edges(dagGraph, v))>0){
-                        for (auto&& pe : graph::edges(dagGraph, v)){
-                            graph::container::csr_row<unsigned int>& p=dagGraph[graph::target_id(dagGraph, pe)];
+                    if(size(graph::views::incidence(dagGraph, v))>0){
+                        for (auto&& pe : graph::views::incidence(dagGraph, v)){
+                            auto p=*graph::find_vertex(dagGraph, pe.target_id);
                             auto& pv=graph::vertex_value(dagGraph, p);
                             std::u16string pvStr(pv.start, pv.stop);
                             // std::cout<<"arg? "<<size(graph::edges(dagGraph, p))<<(cv.to_bytes(pvStr))<<std::endl;
                             if(pv.token_start==sylvanmats::antlr4::parse::LPAREN){
-                                for (auto&& ipe : graph::edges(dagGraph, p)){
-                                    graph::container::csr_row<unsigned int>& ip=dagGraph[graph::target_id(dagGraph, ipe)];
+                                for (auto&& ipe : graph::views::incidence(dagGraph, p)){
+                                    auto ip=*graph::find_vertex(dagGraph, ipe.target_id);
                                     auto& ipv=graph::vertex_value(dagGraph, ip);
                                     std::u16string ipvStr(ipv.start, ipv.stop);
                                     if(ipv.token_start==sylvanmats::antlr4::parse::ID){
@@ -360,8 +363,8 @@ namespace sylvanmats::dsl{
                 break;
             }
             else if(vv.token_start==sylvanmats::antlr4::parse::STRING_LITERAL){
-                auto& vp=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)+1]);
-                auto& vm=graph::vertex_value(dagGraph, dagGraph[graph::target_id(dagGraph, se)-1]);
+                auto vp=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id+1));
+                auto vm=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, se.target_id-1));
                 std::u16string expr2(vv.start, vv.stop);
                 if(vm.token_start!=sylvanmats::antlr4::parse::COLON && vm.token_start!=sylvanmats::antlr4::parse::PIPE && vm.token_start!=sylvanmats::antlr4::parse::LPAREN && vm.token_start!=sylvanmats::antlr4::parse::ROOT){expr.back()+=u" && ";if(!lexerInstance.empty())orReset=u"lIndex=index;";}
                 std::u16string expr3{};
@@ -457,8 +460,8 @@ namespace sylvanmats::dsl{
                 rangeOn=false;
             }
             else if(vv.token_start==sylvanmats::antlr4::parse::LBRACE){
-                for (auto&& be : graph::edges(dagGraph, v)){
-                    auto& b=dagGraph[graph::target_id(dagGraph, be)];
+                for (auto&& be : graph::views::incidence(dagGraph, v)){
+                    auto b=*graph::find_vertex(dagGraph, be.target_id);
                     auto& bv=graph::vertex_value(dagGraph, b);
                     if(bv.token_start==sylvanmats::antlr4::parse::RBRACE){
                         std::u16string expr2(vv.stop+1, bv.start-1);
@@ -467,7 +470,7 @@ namespace sylvanmats::dsl{
                 }
 
             }
-            if(size(graph::edges(dagGraph, v))>0){recurseLexerRule(g4Buffer, dagGraph, dagGraph[graph::target_id(dagGraph, se)], expr);}
+            if(size(graph::views::incidence(dagGraph, v))>0){recurseLexerRule(g4Buffer, dagGraph, se.target_id, expr);}
             count++;
         }
         return ret;

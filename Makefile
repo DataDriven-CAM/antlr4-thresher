@@ -24,25 +24,25 @@ cantlrtool: LDFLAGS= -Wl,-rpath,"$$ORIGIN" -Wl,--allow-multiple-definition -L../
 cantlrtool: build/tool/src/main.o
 	$(CXX) $(LDFLAGS) -o cantlrtool $(wildcard build/tool/src/*.o)
 
-build/src/parse/G4Reader.o: CXXFLAGS= -DNDEBUG  -O3 -fPIC -pthread -std=c++26 -I./include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/graph-v2/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
+build/src/parse/G4Reader.o: CXXFLAGS= -DNDEBUG  -O3 -fPIC -pthread -std=c++26 -I./include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/expected/include -I$(MODULE_DIRECTORY)/graph-v3/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
 build/src/parse/G4Reader.o: ./src/parse/G4Reader.cpp 
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o build/src/parse/G4Reader.o ./src/parse/G4Reader.cpp
 
-build/src/dsl/Morpher.o: CXXFLAGS= -DNDEBUG  -O3 -fPIC -pthread -std=c++26 -I./include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/graph-v2/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
+build/src/dsl/Morpher.o: CXXFLAGS= -DNDEBUG  -O3 -fPIC -pthread -std=c++26 -I./include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/expected/include -I$(MODULE_DIRECTORY)/graph-v3/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
 build/src/dsl/Morpher.o: ./src/dsl/Morpher.cpp 
 	pwd
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o build/src/dsl/Morpher.o ./src/dsl/Morpher.cpp
 
-#build/src/publishing/CodeGenerator.o: CXXFLAGS= -DNDEBUG  -O3 -pthread -std=c++26 -I../include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/graph-v2/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
+#build/src/publishing/CodeGenerator.o: CXXFLAGS= -DNDEBUG  -O3 -pthread -std=c++26 -I../include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/graph-v3/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
 #build/src/publishing/CodeGenerator.o: ./src/publishing/CodeGenerator.cpp 
 #	pwd
 #	@mkdir -p $(@D)
 #	$(CXX) $(CXXFLAGS) -c -o build/src/publishing/CodeGenerator.o ./src/publishing/CodeGenerator.cpp
 
 -include build/tool/src/main.d
-build/tool/src/main.o : CXXFLAGS=-std=c++26 -DNDEBUG  -O3 -fPIC -fpermissive -I./include -I$(MODULE_DIRECTORY)/CLI11/include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/graph-v2/include -MMD
+build/tool/src/main.o : CXXFLAGS=-std=c++26 -DNDEBUG  -O3 -fPIC -fpermissive -I./include -I$(MODULE_DIRECTORY)/CLI11/include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/expected/include -I$(MODULE_DIRECTORY)/graph-v3/include -MMD
 build/tool/src/main.o : ./tool/src/main.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o build/tool/src/main.o -c ./tool/src/main.cpp

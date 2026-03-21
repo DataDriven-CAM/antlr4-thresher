@@ -504,18 +504,17 @@ namespace sylvanmats::antlr4::parse {
             std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& a, std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& b){if(std::get<0>(a)!=std::get<0>(b)){return std::get<0>(a)<std::get<0>(b);} return std::get<1>(a)<std::get<1>(b);});
             using value = std::ranges::range_value_t<decltype(edges)>;
             graph::vertex_id_t<G> N = static_cast<graph::vertex_id_t<G>>(size(graph::vertices(dagGraph)));
-            using edge_desc  = graph::edge_info<graph::vertex_id_t<G>, true, void, int>;
-            dagGraph.reserve_vertices(vertices.size());
-            dagGraph.reserve_edges(edges.size());
-            dagGraph.load_vertices(vertices, [&](ast_node& nm) {
+//            dagGraph.reserve_vertices(vertices.size());
+//            dagGraph.reserve_edges(edges.size());
+            dagGraph.load_edges(edges, [](const value& val) -> graph::copyable_edge_t<size_t, int>{
+                    std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
+                return {std::get<0>(val), std::get<1>(val), std::get<2>(val)};
+              });
+            dagGraph.load_vertices(vertices, [&](const ast_node& nm) ->graph::copyable_vertex_t<graph::vertex_id_t<G>, ast_node>{
                 auto uid = static_cast<graph::vertex_id_t<G>>(&nm - vertices.data());
-//                std::cout<<"vertex "<<uid<<std::endl;
-                return graph::copyable_vertex_t<graph::vertex_id_t<G>, ast_node>{uid, nm};
+                std::cout<<"vertex "<<uid<<std::endl;
+                return {uid, nm};
             });
-            dagGraph.load_edges(edges, [](const value& val) -> edge_desc {
-//                    std::cout<<"edge "<<std::get<0>(val)<<" "<<std::get<1>(val)<<" "<<std::get<2>(val)<<std::endl;
-                return edge_desc{std::get<0>(val), std::get<1>(val), std::get<2>(val)};
-              }, N);
             //display();
             apply(utf16, options, dagGraph);
 
@@ -531,16 +530,16 @@ namespace sylvanmats::antlr4::parse {
             auto uValue=graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, uid));
             std::u16string label{};
             label.assign(uValue.start, uValue.stop);
-            std::cout<<" "<<cv.to_bytes(label)<<" "<<size(graph::edges(dagGraph, uid))<<std::endl;
-            if(size(graph::edges(dagGraph, u))>0)std::cout<<"\t";
-            for (auto&& oe : graph::edges(dagGraph, u)) {
-                graph::container::csr_row<unsigned int>& v=dagGraph[graph::target_id(dagGraph, oe)];
+            std::cout<<" "<<cv.to_bytes(label)<<" "<<size(graph::views::incidence(dagGraph, uid))<<std::endl;
+            if(size(graph::views::incidence(dagGraph, u))>0)std::cout<<"\t";
+            for (auto oe : graph::views::incidence(dagGraph, u)) {
+                auto v=*graph::find_vertex(dagGraph, oe.target_id);
                 auto& nu=graph::vertex_value(dagGraph, u);
                 auto& nv=graph::vertex_value(dagGraph, v);
                 label.assign(nv.start, nv.stop);
                 std::cout<<cv.to_bytes(label)<<" ";
             }
-            if(size(graph::edges(dagGraph, u))>0)std::cout<<std::endl;
+            if(size(graph::views::incidence(dagGraph, u))>0)std::cout<<std::endl;
         }
     }
 }

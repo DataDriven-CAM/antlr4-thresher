@@ -12,7 +12,8 @@
   "devDependencies": {
     "doctest": "onqtam/doctest",
     "fmt": "fmtlib/fmt",
-    "graph-v2": "stdgraph/graph-v2",
+    "expected" : "TartanLlama/expected",
+    "graph-v3": "stdgraph/graph-v3",
     "antlr4": "antlr/antlr4",
     "grammars-v4": "antlr/grammars-v4"
   },
