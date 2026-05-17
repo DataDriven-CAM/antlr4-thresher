@@ -423,6 +423,7 @@ namespace sylvanmats::antlr4::parse {
                 vertices.push_back({.start=&(*temp), .stop=&(*it), .token_start=ARGUMENT});
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
                 vertices.push_back({.start=&(*it), .token_start=RBRACE});
+                std::cout<<"g4reader rbrace "<<cv.to_bytes(std::u16string(vertices.back().start, vertices.back().stop))<<std::endl;
                 ++it;
                 vertices.back().stop=&(*it);
                 edges.push_back(std::make_tuple(associates.top(), vertices.size()-1, 1));
@@ -503,7 +504,7 @@ namespace sylvanmats::antlr4::parse {
             }
             std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& a, std::tuple<graph::vertex_id_t<G>, graph::vertex_id_t<G>, int>& b){if(std::get<0>(a)!=std::get<0>(b)){return std::get<0>(a)<std::get<0>(b);} return std::get<1>(a)<std::get<1>(b);});
             using value = std::ranges::range_value_t<decltype(edges)>;
-            graph::vertex_id_t<G> N = static_cast<graph::vertex_id_t<G>>(size(graph::vertices(dagGraph)));
+            graph::vertex_id_t<G> N = static_cast<graph::vertex_id_t<G>>(graph::vertices(dagGraph).size());
 //            dagGraph.reserve_vertices(vertices.size());
 //            dagGraph.reserve_edges(edges.size());
             dagGraph.load_edges(edges, [](const value& val) -> graph::copyable_edge_t<size_t, int>{

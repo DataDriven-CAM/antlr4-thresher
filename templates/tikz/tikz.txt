@@ -1,4 +1,8 @@
 
-\tikz [every node/.style = draw, mark/.style={{fill=black!33}}, mark/.default=]
-  \graph {{ {tree} }};
+\tikz [
+    every node/.style={{draw, font=\sffamily, align=center}},
+    mark/.style={{fill=black!20}},mark/.default=,
+    /tikz/node distance=1.2cm and 0.8cm
+]
+  \graph [grow down, branch right=3cm] {{ {tree} }};
 

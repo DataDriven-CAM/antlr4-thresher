@@ -18,6 +18,7 @@
 #include <functional>
 
 #include <fcntl.h>
+#include <vector>
 #include <algorithm>
 #include <unordered_map>
 #include <ranges>

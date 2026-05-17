@@ -1,4 +1,5 @@
-
+#include <meta>
+#include <execution>
 #include <typeinfo>
 #include <cxxabi.h>
 
@@ -7,6 +8,8 @@
 #include "parse/G4Reader.h"
 #include "parse/LineColumnFinder.h"
  
+#include "graph/views/dfs.hpp"
+
 namespace sylvanmats::dsl{
     Morpher::Morpher(std::filesystem::path& directory, sylvanmats::publishing::CodeGenerator<std::string>& codeGenerator) : directory (directory), codeGenerator (codeGenerator), currentMode({{u"DEFAULT"}}) {
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
@@ -19,50 +22,80 @@ namespace sylvanmats::dsl{
     }
 
     void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph){
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         auto itDag = std::ranges::find_if(dagGraph.vertex_ids(),
                                  [&](auto u) { return dagGraph.vertex_value(u).token_start == sylvanmats::antlr4::parse::ROOT; });
-        graph::vertex_id_t<sylvanmats::antlr4::parse::G> vid=static_cast<graph::vertex_id_t<sylvanmats::antlr4::parse::G>>(itDag - std::begin(dagGraph.vertex_ids()));
-        auto v=*find_vertex(dagGraph,vid);
-        //std::cout<<"vid "<<vid<<" "<<graph::num_vertices(dagGraph)<<" "<<graph::num_edges(dagGraph)<<std::endl;
-        this->operator()(g4Buffer, dagGraph, vid);
-        // for (auto&& oe : graph::edges(dagGraph, v)) {
-        //     graph::container::csr_row<unsigned int>& o=dagGraph[graph::target_id(dagGraph, oe)];
-        //     /*int status;
-        //     char*realname = abi::__cxa_demangle(typeid(o).name(), nullptr, nullptr, &status);
-        //     std::cout<<"o type: "<<typeid(o).name()<< " => "<<realname<<std::endl;
-        //     free(realname);*/
-        //     auto& nu=graph::vertex_value(dagGraph, v);
-        //     auto& nv=graph::vertex_value(dagGraph, o);
-        //     if(nv.token_start==sylvanmats::antlr4::parse::FRAGMENT){
-        //         this->operator()(g4Buffer, dagGraph, o, true);
+        graph::vertex_id_t<sylvanmats::antlr4::parse::G> rid=static_cast<graph::vertex_id_t<sylvanmats::antlr4::parse::G>>(itDag - std::begin(dagGraph.vertex_ids()));
+        auto v=*graph::find_vertex(dagGraph,rid);
+        //std::cout<<"rid "<<rid<<" "<<graph::num_vertices(dagGraph)<<" "<<graph::num_edges(dagGraph)<<std::endl;
+        this->operator()(g4Buffer, dagGraph, rid);
+        std::unordered_map<graph::vertex_id_t<sylvanmats::antlr4::parse::G>, graph::vertex_id_t<sylvanmats::antlr4::parse::G>> current_path;
+        std::vector<std::vector<graph::vertex_id_t<sylvanmats::antlr4::parse::G>>> all_dead_end_paths;
+        
+        auto dfs = graph::views::edges_dfs(dagGraph, rid);
+        for (auto&& [uv] : dfs) {
+            auto u=*graph::find_vertex(dagGraph, graph::source_id(dagGraph,uv));
+            auto v=*graph::find_vertex(dagGraph, graph::target_id(dagGraph,uv));
+            //std::cout<<" "<<graph::source_id(dagGraph,uv)<<"->"<<graph::target_id(dagGraph,uv)<<std::endl;
+            auto uid=graph::source_id(dagGraph,uv);
+            auto vid=graph::target_id(dagGraph,uv);
+            auto& uVal=graph::vertex_value(dagGraph, u);
+            current_path[vid] = uid;
+            std::u16string uvStr(uVal.start, uVal.stop);
+            //std::cout<<"dfs visit "<<cv.to_bytes(uvStr)<<" "<<uVal.token_start<<" "<<size(graph::edges(dagGraph, u))<<std::endl;
+            if (graph::out_degree(dagGraph, vid) == 0) {
+                std::vector<graph::vertex_id_t<sylvanmats::antlr4::parse::G>> path;
+                for (graph::vertex_id_t<sylvanmats::antlr4::parse::G> curr = vid; ; curr = current_path[curr]) {
+                    path.push_back(curr);
+                    if (curr == rid){current_path.clear(); break; }
+                }
+                std::reverse(path.begin(), path.end());
+                all_dead_end_paths.push_back(path);
+            }
+        }
+        std::cout<<"all_dead_end_paths size: "<<all_dead_end_paths.size()<<std::endl;
+        // for(auto&& path : all_dead_end_paths) {
+        //     std::cout << "Dead-end path: ";
+        //     for (auto vid : path) {
+        //         auto& vVal = graph::vertex_value(dagGraph, *graph::find_vertex(dagGraph, vid));
+        //         std::u16string vStr(vVal.start, vVal.stop);
+        //         std::cout << cv.to_bytes(vStr) << " (" << vVal.token_start << ") -> ";
         //     }
+        //     std::cout << "END" << std::endl;
         // }
     }
 
     void Morpher::operator()(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::vertex_id_t<sylvanmats::antlr4::parse::G> vid){
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
         std::vector<std::u16string> expr{std::u16string{}};
-        std::u16string slabel{};
         std::u16string label{};
+        std::vector<std::string_view>&& enumList=inject_graph(dagGraph, tokens);
         bool frag=false;
-        auto v=*find_vertex(dagGraph,vid);
-        for (auto&& oe : graph::views::incidence(dagGraph, v)) {
-            auto o=*find_vertex(dagGraph, oe.target_id);
+        auto u=*graph::find_vertex(dagGraph,vid);
+        std::cout<<"num u's "<<graph::num_vertices(dagGraph)<<" "<<graph::num_edges(dagGraph, u)<<std::endl;
+        for (auto&& oe : graph::views::incidence(dagGraph, u)) {
+            auto o=*graph::find_vertex(dagGraph, oe.target_id);
             /*int status;
             char*realname = abi::__cxa_demangle(typeid(o).name(), nullptr, nullptr, &status);
             std::cout<<"o type: "<<typeid(o).name()<< " => "<<realname<<std::endl;
             free(realname);*/
-            auto& nu=graph::vertex_value(dagGraph, v);
+            auto& nu=graph::vertex_value(dagGraph, u);
             auto& nv=graph::vertex_value(dagGraph, o);
-            //std::cout<<" "<<(nv.stop-nv.start)<<" "<<nv.mode<<" "<<nu.token_start<<"\t\t"<<cv.to_bytes(label)<<" o inc edges#: "<<size(graph::edges(dagGraph, o))<<std::endl;
+        std::u16string idlabel{};
+            idlabel.assign(nu.start, nu.stop);
+            std::cout<<"nu ts "<<nu.token_start<<" "<<(nu.stop-nu.start)<<" "<<(nv.stop-nv.start)<<" "<<cv.to_bytes(idlabel)<<"\t\t"<<cv.to_bytes(label)<<" o inc edges#: "<<size(graph::edges(dagGraph, o))<<std::endl;
+            // if(nu.token_start==sylvanmats::antlr4::parse::ID){
+            //     slabel.assign(nu.start, nu.stop);
+            // }
             if(nv.token_start==sylvanmats::antlr4::parse::ID){
                 if(expr.size()>=2)expr.resize(1);
                 if(!expr.back().empty())expr.back().clear();
-                slabel.assign(nu.start, nu.stop);
                 label.assign(nv.start, nv.stop);
                 frag=nv.frag;
             }
             else if(nv.token_start==sylvanmats::antlr4::parse::COLON && !label.empty()){
+                std::u16string slabel{};
+                slabel.assign(nu.start, nu.stop);
                 expr.push_back(std::u16string{});
                 recurseLexerRule(g4Buffer, dagGraph, oe.target_id, expr);
                 if(expr.back().empty())expr.back()=u"false";
@@ -71,7 +104,8 @@ namespace sylvanmats::dsl{
                 std::u16string cT=tokenPrefix+label;
                 std::u16string csT=tokenPrefix+slabel;
                 std::transform(cT.cbegin(), cT.cend(), cT.begin(), [](const char16_t& c){return std::toupper(c);});
-                // std::cout<<cv.to_bytes(label)<<" COLON: "<<" "<<frag<<std::endl;
+                std::transform(csT.cbegin(), csT.cend(), csT.begin(), [](const char16_t& c){return std::toupper(c);});
+                 std::cout<<cv.to_bytes(label)<<" "<<cv.to_bytes(slabel)<<" COLON: "<<" "<<frag<<std::endl;
                 std::string mode=(!currentMode.empty()) ? cv.to_bytes(currentMode.back()): "";
                 if(std::isupper(label.at(0)))
                     codeGenerator.appendLexerRuleClass(cv.to_bytes(label), mode, cv.to_bytes(cT), frag, cv.to_bytes(exprLine));
@@ -144,7 +178,7 @@ namespace sylvanmats::dsl{
     bool Morpher::recurseLexerRule(std::u16string& g4Buffer, sylvanmats::antlr4::parse::G& dagGraph, graph::vertex_id_t<sylvanmats::antlr4::parse::G> sourceid, std::vector<std::u16string>& expr){
         bool ret=false;
         bool rangeOn=false;
-        auto source=*find_vertex(dagGraph,sourceid);
+        auto source=*graph::find_vertex(dagGraph,sourceid);
             auto& sv=graph::vertex_value(dagGraph, source);
         int count=0;
         for (auto&& se : graph::views::incidence(dagGraph, source)){
@@ -465,6 +499,8 @@ namespace sylvanmats::dsl{
                     auto& bv=graph::vertex_value(dagGraph, b);
                     if(bv.token_start==sylvanmats::antlr4::parse::RBRACE){
                         std::u16string expr2(vv.stop+1, bv.start-1);
+        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> cv;
+                        std::cout<<"morph RBRACE "<<cv.to_bytes(expr2)<<std::endl;
                         expr.back()+=expr2;
                     }
                 }

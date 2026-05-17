@@ -436,9 +436,10 @@ namespace sylvanmats::publishing{
             if(!frag){
                 parseLadderRules.push_back(std::make_tuple(t, token, true));
                 if(parseLadderRules.size()>1){
-                std::vector<std::tuple<std::string, std::string, bool>>::iterator it = std::find_if(parseLadderRules.begin(), parseLadderRules.end(), [&parentToken](const auto& elem){return std::get<1>(elem).compare(parentToken)==0;} );
+                std::vector<std::tuple<std::string, std::string, bool>>::iterator it = std::find_if(parseLadderRules.begin(), parseLadderRules.end(), [&parentToken](const auto& elem){std::cout<< "Comparing: " << std::get<1>(elem) << " with " << parentToken << std::endl; return std::get<1>(elem).compare(parentToken)==0;} );
                 size_t parentIndex=(it != parseLadderRules.end())? std::distance(parseLadderRules.begin(), it) : 0;
                 size_t tokenIndex=parseLadderRules.size()-1;
+                std::cout<<"Parent index: "<<parentIndex<<" Token index: "<<tokenIndex<<" "<<parseLadderRules.size()<<std::endl;
                 edgeList.push_back({parentToken, parentIndex, token, tokenIndex, tokenPrefix+token});
                 }
             }

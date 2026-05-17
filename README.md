@@ -12,6 +12,13 @@ work(as far as they do) as https://github.com/DataDriven-CAM/cnpm.git is based o
 ```
 cnpm  install
 
+\# first time
+cnpm urlcpp
+cnpm zlib
+cnpm ssl
+cnpm json
+cnpm xml
+
 cnpm lib
 
 #building and running unit tests

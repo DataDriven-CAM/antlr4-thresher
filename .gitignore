@@ -39,3 +39,8 @@ grammars/*
 /test/include/
 cantlrtool
 test/test
+/documents/*.aux
+/documents/*.log
+/documents/*.out
+/documents/*.pdf
+/documents/*.gz

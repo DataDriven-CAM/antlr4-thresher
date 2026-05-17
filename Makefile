@@ -29,7 +29,7 @@ build/src/parse/G4Reader.o: ./src/parse/G4Reader.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o build/src/parse/G4Reader.o ./src/parse/G4Reader.cpp
 
-build/src/dsl/Morpher.o: CXXFLAGS= -DNDEBUG  -O3 -fPIC -pthread -std=c++26 -I./include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/expected/include -I$(MODULE_DIRECTORY)/graph-v3/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
+build/src/dsl/Morpher.o: CXXFLAGS= -DNDEBUG  -O3 -fPIC -pthread -freflection -std=c++26 -I./include -I$(MODULE_DIRECTORY)/fmt/dist/include -I$(MODULE_DIRECTORY)/expected/include -I$(MODULE_DIRECTORY)/graph-v3/include -I$(MODULE_DIRECTORY)/mio/include -MMD -MP
 build/src/dsl/Morpher.o: ./src/dsl/Morpher.cpp 
 	pwd
 	@mkdir -p $(@D)
