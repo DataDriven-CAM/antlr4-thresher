@@ -133,8 +133,11 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string>>>{
             std::string eA=std::get<1>(v[i]);
             auto iArg=fmt::arg("indent", indentation);
             auto fArg=fmt::arg("function", iA);
+            std::string tA="LEXER_"+iA;
+            std::transform(tA.begin(), tA.end(), tA.begin(), [](const char& c){return std::toupper(c);});
+            auto tArg=fmt::arg("token", tA);
             auto eArg=fmt::arg("expression", eA);
-            fmt::vformat_to(ctx.out(), "{indent}std::function<bool(std::u16string::const_iterator&)> {function} = [&](std::u16string::const_iterator& it) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return ret;}};\n\n", fmt::make_format_args(iArg, fArg, eArg));
+            fmt::vformat_to(ctx.out(), "{indent}std::function<lexer_matchings(std::u16string::const_iterator&)> {function} = [&](std::u16string::const_iterator& it) {{std::u16string::const_iterator temp=it; bool ret={expression}; if(ret)it=temp;return lexer_matchings{{.success=ret, .next_char_index=std::distance(itBegin, temp), .token={token}}};}};\n\n", fmt::make_format_args(iArg, fArg, tArg, eArg));
         }
         constexpr typename std::string::value_type* fmt={"\n"};
         return fmt::format_to(ctx.out(), fmt);
@@ -173,6 +176,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
     std::string value_format;
 };
 
+//the ladder rules
 template <>
 struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::string, bool>>>{
     auto parse(format_parse_context& ctx) -> format_parse_context::iterator{
@@ -182,22 +186,22 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
      auto format(const std::vector<std::tuple<std::string, std::string, std::string, bool>>& v, format_context& ctx) const -> format_context::iterator{
         std::string indentation(12, ' ');
             auto iArg=fmt::arg("indent", indentation);
-            if(!v.empty())fmt::vformat_to(ctx.out(), "{indent}while(it!=utf16.end()){{\n{indent}   bool hitToken=false;LEXER_TOKEN winningToken;MODE winningMode=mode;std::u16string::const_iterator winningIt=it;bool winningPushable=pushable;bool winningPoppable=poppable;bool winningSkippable=skippable;\n", fmt::make_format_args(iArg));
+            if(!v.empty())fmt::vformat_to(ctx.out(), "{indent}   bool hitToken=false;LEXER_TOKEN winningToken;MODE winningMode=mode;std::u16string::const_iterator winningIt=it;bool winningPushable=pushable;bool winningPoppable=poppable;bool winningSkippable=skippable;\n", fmt::make_format_args(iArg));
 //         std::cout<<"tokens "<<v.size()<<std::endl;
         for (int i= 0; i < v.size(); ++i){
             std::string iA=std::get<0>(v[i]);
-            std::string mA=(!std::get<1>(v[i]).empty())? "mode=="+std::get<1>(v[i])+" && " : "";
+            std::string mA=(!std::get<1>(v[i]).empty())? "if(mode=="+std::get<1>(v[i])+"){" : "{";
             std::string tA=std::get<2>(v[i]);
             auto fArg=fmt::arg("function", iA);
             auto mArg=fmt::arg("mode", mA);
             auto tArg=fmt::arg("token", tA);
             //auto eArg=fmt::arg("expression", eA);
             // if(i==0)
-                fmt::vformat_to(ctx.out(), "{indent}nextMode=mode;pushable=false;poppable=false;skippable=false;\n{indent}if(std::u16string::const_iterator itTry=it;{mode}{function}(itTry) && std::distance(temp, winningIt)<std::distance(temp, itTry)){{\n{indent}   hitToken=true;winningToken={token};winningIt=itTry;winningMode=nextMode;winningPushable=pushable;winningPoppable=poppable;winningSkippable=skippable;\n{indent}}}\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
+                fmt::vformat_to(ctx.out(), "{indent}nextMode=mode;pushable=false;poppable=false;skippable=false;\n{indent}{mode}\n{indent}std::u16string::const_iterator itTry=it;\n{indent}lexer_matchings lm={function}(itTry);\n{indent}if(lm.success && (lm.next_char_index > bestMatch.next_char_index)){{\n{indent}   bestMatch = lm;hitToken=true;winningToken={token};winningIt=itTry;winningMode=nextMode;winningPushable=pushable;winningPoppable=poppable;winningSkippable=skippable;\n{indent}}}\n{indent}}}\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
             // else
             //     fmt::vformat_to(ctx.out(), "{indent}}}else if({mode}{function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token_start={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
         }
-        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<winningMode<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.start=&(*temp), .stop=&(*winningIt), .token_start=winningToken}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    it=winningIt;\n{indent}    if(winningPushable)pushMode(winningMode);if(winningPoppable)popMode();count++;\n{indent}}}else{{it++;}}\n{indent}    if(std::distance(it, itEnd)==1)it++;temp=it;\n{indent}}}\n", fmt::make_format_args(iArg));
+        if(!v.empty())return fmt::vformat_to(ctx.out(), "\n", fmt::make_format_args(iArg));
         else return fmt::format_to(ctx.out(), "");
 //        if(curly){
 //            constexpr char* fmt={"}}"};
@@ -213,6 +217,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, std::stri
     std::string value_format;
 };
 
+//lambda rules
 template <>
 struct fmt::formatter<std::vector<std::tuple<std::string, std::string, bool>>>{
     auto parse(format_parse_context& ctx) -> format_parse_context::iterator{
@@ -235,7 +240,7 @@ struct fmt::formatter<std::vector<std::tuple<std::string, std::string, bool>>>{
             // else
             //     fmt::vformat_to(ctx.out(), "{indent}}}else if({function}(it)){{\n{indent}   vertices.push_back({{.start=&(*temp), .stop=&(*it), .token_start={token}}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));\n{indent}   depth++;\n", fmt::make_format_args(iArg, fArg, mArg, tArg));
         }
-        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.parser_token=winningToken, .token_start=graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph, count)).token_start, .token_end=graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph,count)).token_end, .id=count}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    count++;\n{indent}}}else{{}}\n", fmt::make_format_args(iArg));
+        if(!v.empty())return fmt::vformat_to(ctx.out(), "{indent}    if(hitToken){{\n{indent}    /*if(count<20)std::cout<<\"winningMode \"<<\" \"<<winningPushable<<\" \"<<winningToken<<\" \"<<winningPoppable<<std::endl*/;if(!winningSkippable){{vertices.push_back({{.parser_token=winningToken, .token_start=graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph, count)).token_start, .token_end=graph::vertex_value(ldagGraph, *graph::adj_list::find_vertex(ldagGraph,count)).token_end, .id=count}});\n{indent}   edges.push_back(std::make_tuple(vertices.size()-2, vertices.size()-1, 1));}}skippable=false;\n{indent}    count++;\n{indent}}}else{{}}\n", fmt::make_format_args(iArg));
         else return fmt::format_to(ctx.out(), "");
 //        if(curly){
 //            constexpr char* fmt={"}}"};
@@ -436,11 +441,11 @@ namespace sylvanmats::publishing{
             if(!frag){
                 parseLadderRules.push_back(std::make_tuple(t, token, true));
                 if(parseLadderRules.size()>1){
-                std::vector<std::tuple<std::string, std::string, bool>>::iterator it = std::find_if(parseLadderRules.begin(), parseLadderRules.end(), [&parentToken](const auto& elem){std::cout<< "Comparing: " << std::get<1>(elem) << " with " << parentToken << std::endl; return std::get<1>(elem).compare(parentToken)==0;} );
-                size_t parentIndex=(it != parseLadderRules.end())? std::distance(parseLadderRules.begin(), it) : 0;
-                size_t tokenIndex=parseLadderRules.size()-1;
-                std::cout<<"Parent index: "<<parentIndex<<" Token index: "<<tokenIndex<<" "<<parseLadderRules.size()<<std::endl;
-                edgeList.push_back({parentToken, parentIndex, token, tokenIndex, tokenPrefix+token});
+                // std::vector<std::tuple<std::string, std::string, bool>>::iterator it = std::find_if(parseLadderRules.begin(), parseLadderRules.end(), [&parentToken](const auto& elem){std::cout<< "Comparing: " << std::get<1>(elem) << " with " << parentToken << std::endl; return std::get<1>(elem).compare(parentToken)==0;} );
+                // size_t parentIndex=(it != parseLadderRules.end())? std::distance(parseLadderRules.begin(), it) : 0;
+                // size_t tokenIndex=parseLadderRules.size()-1;
+                // std::cout<<"Parent index: "<<parentIndex<<" Token index: "<<tokenIndex<<" "<<parseLadderRules.size()<<std::endl;
+                // edgeList.push_back({parentToken, parentIndex, token, tokenIndex, tokenPrefix+token});
                 }
             }
         };  

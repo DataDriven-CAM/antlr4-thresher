@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <valarray>
 #include <limits>
+#include <meta>
 
 #define FMT_HEADER_ONLY
 #include "graph/container/compressed_graph.hpp"

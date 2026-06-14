@@ -39,6 +39,31 @@ namespace {namespace} {{
 
     using PG = graph::container::compressed_graph<int, parser_node>;
 
+    struct parser_matchings{{
+        bool success = false;
+        size_t next_token_index = 0;
+        ast_node span;
+        std::vector<std::shared_ptr<std::vector<parser_node>>> capturedNodes;
+    }};
+
+    struct tracker_key{{
+        size_t source_start_byte;
+        const std::vector<parser_node>* rule_address;
+        bool operator==(const tracker_key& other) const {{
+            return source_start_byte == other.source_start_byte && rule_address == other.rule_address;
+        }}
+    }};
+
+    struct tracker_key_hash {{
+        std::size_t operator()(const tracker_key& key) const {{
+            auto h1 = std::hash<size_t>{{}}(key.source_start_byte);
+            auto h2 = std::hash<const std::vector<parser_node>*>{{}}(key.rule_address);
+            return h1 ^ (h2 << 1); 
+        }}
+    }};
+
+    using ParserCacheTable = std::unordered_map<tracker_key, parser_matchings, tracker_key_hash>;
+
     class {class} {super_class}{{
     protected:
         PG dagGraph;
@@ -84,7 +109,7 @@ namespace {namespace} {{
             count++;
         }}
             std::sort(edges.begin(), edges.end(), [](std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& a, std::tuple<graph::vertex_id_t<PG>, graph::vertex_id_t<PG>, int>& b){{if(std::get<0>(a)!=std::get<0>(b)){{return std::get<0>(a)<std::get<0>(b);}} return std::get<1>(a)<std::get<1>(b);}});
-            graph::vertex_id_t<PG> N = static_cast<graph::vertex_id_t<PG>>(size(graph::vertices(this->dagGraph)));
+            graph::vertex_id_t<PG> N = static_cast<graph::vertex_id_t<PG>>(graph::vertices(this->dagGraph).size());
 //            this->dagGraph.reserve_vertices(vertices.size());
 //            this->dagGraph.reserve_edges(edges.size());
             this->dagGraph.load_edges(edges, [](const auto& c) -> graph::copyable_edge_t<size_t, int>{{
